@@ -1,0 +1,17 @@
+quality_scope,selected_players,parsed_rows_before_global_dedup,within_player_duplicate_rows,cross_player_duplicate_game_ids_removed,final_unique_game_rows,player_id,duplicate_player_game_ids,missing_session_ids,games
+global_parse,15.0,8047.0,0.0,2.0,8043.0,,,,
+player_features,,,,,,albornoz00,0.0,0.0,542.0
+player_features,,,,,,arseniii_nesterov,0.0,0.0,549.0
+player_features,,,,,,black_knight22,0.0,0.0,533.0
+player_features,,,,,,gepard2014,0.0,0.0,526.0
+player_features,,,,,,gmadham,0.0,0.0,533.0
+player_features,,,,,,kayra_kamer,0.0,0.0,527.0
+player_features,,,,,,kingdomino1,0.0,0.0,539.0
+player_features,,,,,,kontrajako,0.0,0.0,532.0
+player_features,,,,,,maratgilfanovyoutube,0.0,0.0,535.0
+player_features,,,,,,onepoundrook,0.0,0.0,546.0
+player_features,,,,,,roadto18thworldchamp,0.0,0.0,532.0
+player_features,,,,,,sergiooliva64,0.0,0.0,528.0
+player_features,,,,,,tonygazzo,0.0,0.0,547.0
+player_features,,,,,,vladimirovich9000,0.0,0.0,555.0
+player_features,,,,,,yoseph2013,0.0,0.0,519.0

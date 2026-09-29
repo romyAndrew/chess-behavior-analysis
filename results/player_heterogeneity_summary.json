@@ -1,0 +1,14 @@
+{
+  "players": 15,
+  "estimable_effects": 15,
+  "positive_estimates": 11,
+  "negative_estimates": 4,
+  "zero_estimates": 0,
+  "minimum_difference_pp": -13.308380120607193,
+  "maximum_difference_pp": 28.37599293909973,
+  "median_difference_pp": 12.012288786482333,
+  "mean_difference_pp": 10.146308389353267,
+  "players_below_existing_min_group_size": [
+    "black_knight22"
+  ]
+}

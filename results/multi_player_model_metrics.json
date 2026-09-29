@@ -1,0 +1,65 @@
+{
+  "total_games": 8043,
+  "decisive_games": 7500,
+  "excluded_non_decisive": 543,
+  "models": {
+    "rating_only": {
+      "model": "rating_only",
+      "n_total": 7500,
+      "n_train": 6000,
+      "n_test": 1500,
+      "accuracy": 0.628,
+      "balanced_accuracy": 0.6101752131190212,
+      "roc_auc": 0.6573013600572657,
+      "log_loss": 0.6303514681331225,
+      "split": "chronological",
+      "test_start": "2026-08-31 12:26:18+00:00",
+      "features": [
+        "rating_diff"
+      ]
+    },
+    "baseline": {
+      "model": "baseline",
+      "n_total": 7500,
+      "n_train": 6000,
+      "n_test": 1500,
+      "accuracy": 0.6246666666666667,
+      "balanced_accuracy": 0.6044689919958353,
+      "roc_auc": 0.6549058046463201,
+      "log_loss": 0.631608225388726,
+      "split": "chronological",
+      "test_start": "2026-08-31 12:26:18+00:00",
+      "features": [
+        "rating_diff",
+        "speed",
+        "user_color"
+      ]
+    },
+    "behavioral": {
+      "model": "behavioral",
+      "n_total": 7500,
+      "n_train": 6000,
+      "n_test": 1500,
+      "accuracy": 0.638,
+      "balanced_accuracy": 0.6029519424741329,
+      "roc_auc": 0.6456489555541095,
+      "log_loss": 0.6287978289882393,
+      "split": "chronological",
+      "test_start": "2026-08-31 12:26:18+00:00",
+      "features": [
+        "hour_sin",
+        "hour_cos",
+        "rating_diff",
+        "break_after_previous",
+        "loss_streak_before",
+        "win_streak_before",
+        "session_game_number",
+        "day_of_week",
+        "speed",
+        "user_color",
+        "tilt_proxy"
+      ]
+    }
+  },
+  "behavioral_model_interpretation": "Numeric coefficients are standardized. Odds ratios describe a one-standard-deviation change for numeric predictors and a category relative to its reference category for one-hot features."
+}

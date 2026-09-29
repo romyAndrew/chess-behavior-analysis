@@ -1,0 +1,115 @@
+project:
+  name: chess-behavior-analysis
+  # IANA timezone used for calendar features (default: UTC).
+  timezone: UTC
+
+user:
+  username: bat1skaf
+
+paths:
+  raw_pgn: data/raw/lichess_bat1skaf.pgn
+  games_csv: data/processed/games.csv
+  features_csv: data/processed/games_features.csv
+  stats_json: results/tilt_test.json
+  model_metrics_json: results/model_metrics.json
+  model_coefficients_csv: results/model_coefficients.csv
+  model_comparison_csv: results/model_comparison.csv
+  multi_model_metrics_json: results/multi_player_model_metrics.json
+  multi_model_coefficients_csv: results/multi_player_model_coefficients.csv
+  multi_model_comparison_csv: results/multi_player_model_comparison.csv
+  analysis_summary_md: results/analysis_summary.md
+  tilt_sensitivity_csv: results/tilt_sensitivity.csv
+  tilt_sensitivity_md: results/tilt_sensitivity.md
+  tilt_bootstrap_comparison_csv: results/tilt_bootstrap_comparison.csv
+  tilt_bootstrap_comparison_md: results/tilt_bootstrap_comparison.md
+  tilt_sensitivity_session_bootstrap_csv: results/tilt_sensitivity_session_bootstrap.csv
+  walk_forward_metrics_csv: results/walk_forward_metrics.csv
+  walk_forward_fold_metrics_csv: results/walk_forward_fold_metrics.csv
+  walk_forward_metrics_md: results/walk_forward_metrics.md
+  multi_walk_forward_metrics_csv: results/multi_player_walk_forward_metrics.csv
+  multi_walk_forward_fold_metrics_csv: results/multi_player_walk_forward_fold_metrics.csv
+  multi_walk_forward_metrics_md: results/multi_player_walk_forward_metrics.md
+  sample_players_csv: results/sample_players.csv
+  sampling_metadata_json: results/sampling_metadata.json
+  sampling_candidate_pool_csv: results/sampling_candidate_pool.csv
+  multi_raw_dir: data/raw/multi_player_bullet
+  multi_processed_dir: data/processed/multi_player_bullet
+  multi_games_csv: data/processed/multi_player_bullet_games.csv
+  multi_features_csv: data/processed/multi_player_games_features.csv
+  player_summary_csv: results/player_summary.csv
+  player_tilt_effects_csv: results/player_tilt_effects.csv
+  multi_player_pooled_csv: results/multi_player_pooled_summary.csv
+  multi_player_data_quality_csv: results/multi_player_data_quality.csv
+  multi_player_analysis_md: results/multi_player_analysis.md
+  player_heterogeneity_csv: results/player_heterogeneity.csv
+  player_heterogeneity_summary_json: results/player_heterogeneity_summary.json
+  log_file: logs/pipeline.log
+  figures_dir: figures
+
+api:
+  base_url: https://lichess.org
+  games_endpoint: /api/games/user/{username}
+  fallback_endpoint: /games/export/{username}
+  accept: application/x-chess-pgn
+  user_agent: chess-behavior-analysis/1.0
+  max_games: 3000
+  batch_size: 3000
+  request_interval_seconds: 1.2
+  max_retries: 5
+  backoff_seconds: 2.0
+  retry_after_default_seconds: 60
+  follow_redirects: true
+  params:
+    clocks: true
+    evals: true
+    opening: true
+    rated: true
+    perfType: bullet,blitz,rapid,classical
+    variant: standard
+    since: null
+    until: null
+  use_legacy_fallback_on_404: true
+
+features:
+  session_gap_minutes: 30
+  short_break_minutes: 5
+  min_loss_streak: 2
+  time_pressure_seconds: 10
+  time_pressure_fraction_of_initial: 0.10
+  min_eval_coverage_for_quality: 0.20
+
+analysis:
+  confidence_level: 0.95
+  min_group_size: 10
+  bootstrap_iterations: 5000
+  bootstrap_seed: 42
+
+model:
+  target: is_win
+  test_size: 0.20
+  random_state: 42
+  C: 1.0
+  max_iter: 1000
+  class_weight: balanced
+
+walk_forward:
+  initial_train_size: 300
+  test_window_size: 80
+  min_training_size: 200
+
+
+research:
+  cutoff_datetime: "2026-09-28T23:59:59Z"
+  time_control: "60+0"
+
+sampling:
+  target_players: 15
+  min_decisive_games: 500
+  random_seed: 42
+  leaderboard_size: 200
+  leaderboard_perf_types:
+    - bullet
+  collection_max_games: 10000
+  screen_batch_size: 1000
+  leaderboard_endpoint: /api/player/top/{nb}/{perf_type}
+  user_endpoint: /api/user/{username}

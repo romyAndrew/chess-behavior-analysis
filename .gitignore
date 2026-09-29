@@ -1,0 +1,35 @@
+# Python
+__pycache__/
+*.py[cod]
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Testing / coverage
+.pytest_cache/
+.coverage
+htmlcov/
+
+# IDE
+.vscode/
+.idea/
+
+# Environment / secrets
+.env
+*.secret
+
+# Logs
+logs/
+*.log
+
+# Raw downloaded data
+data/raw/
+
+# Per-player intermediate datasets
+data/processed/multi_player/
+data/processed/multi_player_bullet/
+
+# Archives / local snapshots
+*.zip

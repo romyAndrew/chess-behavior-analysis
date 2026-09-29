@@ -1,0 +1,2 @@
+players,games,decisive_games,sessions,tilt_observations,control_observations,tilt_loss_rate,control_loss_rate,difference_pp,inference
+15,8043,7500,1059,641,6859,0.44461778471138846,0.31797638139670503,12.664140331468342,descriptive_only; no player-clustered pooled inference introduced in v11
