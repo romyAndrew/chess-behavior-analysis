@@ -74,7 +74,6 @@ These are observational associations, with cluster-robust standard errors by pla
 
 ![Synthetic null distribution](figures/synthetic_null_distribution.png)
 
-![Player-level heterogeneity](figures/player_heterogeneity.png)
 
 ## Limitations
 

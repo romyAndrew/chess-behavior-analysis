@@ -11,7 +11,6 @@ import pandas as pd
 
 from .config import Settings
 from .stats import _session_bootstrap_difference, analyze_tilt_proxy
-from .viz import plot_player_heterogeneity
 
 
 def analyze_player_heterogeneity(
@@ -253,8 +252,6 @@ def save_player_heterogeneity(
         encoding="utf-8",
     )
 
-    figure_path = settings.resolve_path(settings.paths.figures_dir) / "player_heterogeneity.png"
-    plot_player_heterogeneity(results, figure_path)
 
     report_path = settings.resolve_path(settings.paths.multi_player_analysis_md)
     existing = report_path.read_text(encoding="utf-8") if report_path.exists() else ""

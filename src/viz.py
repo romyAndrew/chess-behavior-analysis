@@ -227,27 +227,3 @@ def plot_multi_player_sample_sizes(player_summary: pd.DataFrame, output_path: Pa
     ax.legend()
     _save(fig, output_path)
 
-
-def plot_player_heterogeneity(results: pd.DataFrame, output_path: Path) -> None:
-    """Plot player-level association estimates in selection order, not rank order."""
-    plot_df = results.sort_values("selection_order").copy()
-    plot_df = plot_df.loc[plot_df["difference_pp"].notna()].copy()
-    if plot_df.empty:
-        return
-
-    y = np.arange(len(plot_df))
-    x = plot_df["difference_pp"].to_numpy(dtype=float)
-    ci_low = plot_df["difference_ci_low"].to_numpy(dtype=float)
-    ci_high = plot_df["difference_ci_high"].to_numpy(dtype=float)
-    valid_ci = np.isfinite(ci_low) & np.isfinite(ci_high)
-    lower = np.where(valid_ci, x - ci_low, 0.0)
-    upper = np.where(valid_ci, ci_high - x, 0.0)
-
-    fig, ax = plt.subplots(figsize=(10, 6))
-    ax.errorbar(x, y, xerr=[lower, upper], fmt="o", capsize=4)
-    ax.axvline(0.0, linewidth=1, linestyle="--")
-    ax.set_yticks(y, plot_df["player_id"].astype(str).tolist())
-    ax.set_xlabel("Estimated difference in loss rate (percentage points)")
-    ax.set_ylabel("Selected player (selection order)")
-    ax.set_title("Player-level heterogeneity of the tilt-proxy association")
-    _save(fig, output_path)

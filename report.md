@@ -187,7 +187,6 @@ The canonical v12 outputs are:
 ```text
 results/player_heterogeneity.csv
 results/player_heterogeneity_summary.json
-figures/player_heterogeneity.png
 ```
 
 The primary visualization uses selection order for readability and includes point estimates, confidence intervals and a zero reference line. It is not a player ranking.
@@ -335,7 +334,6 @@ results/
 figures/
 ├── player_tilt_effects.png
 ├── player_sample_sizes.png
-├── player_heterogeneity.png
 └── walk_forward_roc_auc.png
 ```
 
