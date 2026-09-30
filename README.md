@@ -61,8 +61,8 @@ The player-level estimates remain heterogeneous and uncertain: **-13.31 to +28.3
 
 In the opponent-adjusted logistic models, the tilt-proxy odds ratio falls from **1.72** in the unadjusted specification to:
 
-- **1.12** in the model with rating difference, color and player fixed effects (95% CI 0.90вЂ“1.40; p = 0.303);
-- **1.12** after additionally controlling for same-opponent status (95% CI 0.90вЂ“1.39; p = 0.312).
+- **1.12** in the model with rating difference, color and player fixed effects (95% CI 0.90-1.40; p = 0.303);
+- **1.12** after additionally controlling for same-opponent status (95% CI 0.90-1.39; p = 0.312).
 
 These are observational associations, with cluster-robust standard errors by player. They do not establish a psychological or causal tilt effect.
 
