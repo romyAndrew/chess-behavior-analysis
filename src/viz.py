@@ -28,17 +28,6 @@ def plot_result_by_hour(df: pd.DataFrame, output_dir: Path, timezone_name: str =
     _save(fig, output_dir / "win_rate_by_hour.png")
 
 
-def plot_break_by_tilt(df: pd.DataFrame, output_dir: Path) -> None:
-    """Plot break duration by tilt-proxy state."""
-    plot_df = df.loc[df["break_after_previous"].notna()].copy()
-    fig, ax = plt.subplots(figsize=(9, 5))
-    sns.boxplot(plot_df, x="tilt_proxy", y="break_after_previous", ax=ax)
-    ax.set(
-        xlabel="Tilt proxy",
-        ylabel="Break after previous game (minutes)",
-        title="Inter-game break by tilt-proxy state",
-    )
-    _save(fig, output_dir / "break_by_tilt_proxy.png")
 
 
 def plot_heatmap(df: pd.DataFrame, output_dir: Path, timezone_name: str = "UTC") -> None:
@@ -208,22 +197,3 @@ def plot_multi_player_tilt_effects(player_effects: pd.DataFrame, output_path: Pa
     ax.set_ylabel("Selected player")
     ax.set_title("Player-level tilt-proxy associations")
     _save(fig, output_path)
-
-
-def plot_multi_player_sample_sizes(player_summary: pd.DataFrame, output_path: Path) -> None:
-    """Plot total, decisive and tilt observations by selection order."""
-    plot_df = player_summary.sort_values("player_id").copy()
-    if plot_df.empty:
-        return
-    x = np.arange(len(plot_df))
-    width = 0.25
-    fig, ax = plt.subplots(figsize=(11, 6))
-    ax.bar(x - width, plot_df["games"], width, label="Total games")
-    ax.bar(x, plot_df["decisive_games"], width, label="Decisive games")
-    ax.bar(x + width, plot_df["tilt_observations"], width, label="Tilt observations")
-    ax.set_xticks(x, plot_df["player_id"].astype(str).tolist(), rotation=45, ha="right")
-    ax.set_ylabel("Number of games / observations")
-    ax.set_title("Multi-player sample sizes")
-    ax.legend()
-    _save(fig, output_path)
-

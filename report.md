@@ -333,7 +333,6 @@ results/
 
 figures/
 ├── player_tilt_effects.png
-├── player_sample_sizes.png
 └── walk_forward_roc_auc.png
 ```
 

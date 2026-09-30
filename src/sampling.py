@@ -20,7 +20,7 @@ from .config import Settings
 from .research import filter_research_games, select_latest_decisive_window
 from .stats import analyze_tilt_proxy
 from .parse import normalize_result
-from .viz import plot_multi_player_sample_sizes, plot_multi_player_tilt_effects
+from .viz import plot_multi_player_tilt_effects
 
 
 _SAFE_NAME_RE = re.compile(r"[^A-Za-z0-9_.-]+")
@@ -774,4 +774,3 @@ def save_multi_player_analysis(
     )
     effects.to_csv(settings.resolve_path(settings.paths.player_tilt_effects_csv), index=False)
     plot_multi_player_tilt_effects(effects, settings.resolve_path(settings.paths.figures_dir) / "player_tilt_effects.png")
-    plot_multi_player_sample_sizes(player_summary, settings.resolve_path(settings.paths.figures_dir) / "player_sample_sizes.png")
