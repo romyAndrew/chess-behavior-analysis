@@ -171,7 +171,6 @@ def generate_all(
 ) -> None:
     """Generate the full figure set, including inferential comparisons."""
     plot_result_by_hour(df, output_dir, timezone_name)
-    plot_break_by_tilt(df, output_dir)
     plot_heatmap(df, output_dir, timezone_name)
     plot_tilt_ci(stats_result, output_dir)
     plot_correlations(df, output_dir)

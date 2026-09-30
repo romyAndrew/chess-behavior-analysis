@@ -45,6 +45,13 @@ paths:
   player_heterogeneity_summary_json: results/player_heterogeneity_summary.json
   log_file: logs/pipeline.log
   figures_dir: figures
+  synthetic_null_distribution_csv: results/synthetic_null_distribution.csv
+  synthetic_null_summary_csv: results/synthetic_null_summary.csv
+  synthetic_null_summary_json: results/synthetic_null_summary.json
+  opponent_context_csv: results/opponent_context.csv
+  opponent_adjusted_models_csv: results/opponent_adjusted_models.csv
+  opponent_adjusted_coefficients_csv: results/opponent_adjusted_coefficients.csv
+  v13_analysis_md: results/v13_analysis.md
 
 api:
   base_url: https://lichess.org
@@ -113,3 +120,8 @@ sampling:
   screen_batch_size: 1000
   leaderboard_endpoint: /api/player/top/{nb}/{perf_type}
   user_endpoint: /api/user/{username}
+
+
+v13:
+  null_simulations: 2000
+  simulation_seed: 42

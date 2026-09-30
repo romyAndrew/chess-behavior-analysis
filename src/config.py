@@ -80,6 +80,13 @@ class PathsConfig(BaseModel):
     player_heterogeneity_summary_json: Path
     log_file: Path
     figures_dir: Path
+    synthetic_null_distribution_csv: Path
+    synthetic_null_summary_csv: Path
+    synthetic_null_summary_json: Path
+    opponent_context_csv: Path
+    opponent_adjusted_models_csv: Path
+    opponent_adjusted_coefficients_csv: Path
+    v13_analysis_md: Path
 
 
 class ApiConfig(BaseModel):
@@ -161,6 +168,12 @@ class ResearchConfig(BaseModel):
         return value
 
 
+class V13Config(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    null_simulations: int = Field(default=5000, ge=2000)
+    simulation_seed: int = 42
+
+
 class SamplingConfig(BaseModel):
     model_config = ConfigDict(extra="forbid")
     target_players: int = Field(default=15, gt=0)
@@ -188,6 +201,7 @@ class Settings(BaseModel):
     walk_forward: WalkForwardConfig
     research: ResearchConfig
     sampling: SamplingConfig = SamplingConfig()
+    v13: V13Config = V13Config()
 
     repo_root: Path
 
@@ -234,6 +248,13 @@ class Settings(BaseModel):
             self.resolve_path(self.paths.player_heterogeneity_csv),
             self.resolve_path(self.paths.player_heterogeneity_summary_json),
             self.resolve_path(self.paths.log_file),
+            self.resolve_path(self.paths.synthetic_null_distribution_csv),
+            self.resolve_path(self.paths.synthetic_null_summary_csv),
+            self.resolve_path(self.paths.synthetic_null_summary_json),
+            self.resolve_path(self.paths.opponent_context_csv),
+            self.resolve_path(self.paths.opponent_adjusted_models_csv),
+            self.resolve_path(self.paths.opponent_adjusted_coefficients_csv),
+            self.resolve_path(self.paths.v13_analysis_md),
         ):
             path.parent.mkdir(parents=True, exist_ok=True)
         self.resolve_path(self.paths.figures_dir).mkdir(parents=True, exist_ok=True)

@@ -1,0 +1,3 @@
+scenario,simulations,observed_difference_pp,mean_difference_pp,median_difference_pp,std_difference_pp,simulation_interval_low_pp,simulation_interval_high_pp,empirical_upper_tail_proportion,mean_tilt_n,min_tilt_n,max_tilt_n,mean_control_n,simulation_seed,calibration_method
+raw_elo,2000,12.664140331468342,11.618118740706013,11.66878421914581,1.9776164112984143,7.6463437436076065,15.369940223327399,0.3155,776.888,678,877,6723.112,42,raw Elo probability
+player_calibrated_elo,2000,12.664140331468342,12.18064675488124,12.154764014317626,2.083552303311634,8.276995784982464,16.105861563873685,0.4045,686.062,590,778,6813.938,42,"expanding player-specific residual correction using only prior decisive games; p_cal = clip(p_elo + mean(prior observed_loss - p_elo), 1e-4, 1-1e-4)"

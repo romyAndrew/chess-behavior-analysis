@@ -341,8 +341,107 @@ figures/
 
 Legacy single-player statistical artifacts remain in `results/` for regression testing and historical comparison. They are not the final multi-player research population.
 
-## 13. Final interpretation
+## 13. V13: synthetic null model
 
-The final analysis shows a positive pooled descriptive association between the baseline tilt proxy and subsequent loss, with an observed difference of **+12.66 percentage points**. Player-level estimates vary from **-13.31 to +28.38 pp**, so the observed association is not uniform across the sampled players. At the same time, individual uncertainty is substantial, and the analysis does not establish psychological tilt or causality.
+V13 is an analytical layer over the fixed v12 dataset. The sampling frame, 15 selected players, cutoff, `60+0` restriction, observation windows, baseline tilt proxy, sensitivity analysis, player-level heterogeneity and predictive models are unchanged.
 
-The main result is therefore an observed, heterogeneous behavioral association in the specified Lichess bullet sample, not a universal effect for chess players.
+### 13.1 Baseline sanity check
+
+The observed dataset contains **8,043** games, **7,500** decisive games and **543** draws across **15** players. Recomputing the baseline from the same feature file gives **641** tilt-proxy observations and an observed pooled difference of **+12.66 percentage points**.
+
+### 13.2 Null data-generating process
+
+For each simulation, player identity, opponent identity, ratings, rating differences, color, timestamps, breaks, sessions, draws, repeated-opponent structure and game counts are preserved. Only decisive win/loss outcomes are regenerated.
+
+For the raw Elo null:
+
+```text
+p(win) = 1 / (1 + 10^(-rating_diff / 400))
+```
+
+For the calibrated null, the Elo loss probability is adjusted by an expanding player-specific residual correction computed only from prior decisive games:
+
+```text
+p_cal = clip(p_elo + mean(prior observed_loss - prior p_elo), 1e-4, 1 - 1e-4)
+```
+
+The current game's outcome is never used to construct its own probability, and draws do not update the calibration term.
+
+Both null scenarios contain no explicit tilt effect. After synthetic outcomes are generated, the same baseline tilt-proxy rule is recomputed from the synthetic sequence.
+
+### 13.3 Null simulation results
+
+The analysis uses **2,000 simulations per scenario** with seed **42**.
+
+| Scenario | Mean difference | Median | SD | 95% simulation interval | Share >= observed |
+|---|---:|---:|---:|---|---:|
+| Raw Elo | +11.62 pp | +11.67 pp | 1.98 pp | [7.65, 15.37] pp | 31.6% |
+| Player-calibrated Elo | +12.18 pp | +12.15 pp | 2.08 pp | [8.28, 16.11] pp | 40.5% |
+
+The interval above is the central 95% interval of the **synthetic null distribution**. It is not a confidence interval for the observed effect.
+
+The upper-tail proportion is the share of null simulations at least as large as the observed +12.66 pp association. It is reported descriptively and is not relabelled as a conventional p-value.
+
+The observed association therefore has a non-negligible occurrence rate under both specified null data-generating processes, even though no explicit tilt effect is simulated.
+
+## 14. Opponent context and adjusted models
+
+A first diagnostic shows that games following a previous loss tend to occur against relatively stronger opponents than games following a previous non-loss. The mean rating difference is **84.25** after a previous loss versus **151.10** after a previous non-loss; lower rating difference means the opponent is stronger relative to the focal player.
+
+After a previous loss and short break, the mean rating difference is **71.58**, and the same-opponent rate is **53.4%**. The broader short-break group has a same-opponent rate of **51.0%**, while the longer-break group has a rate of **3.5%**. These are descriptive context measures rather than causal mechanisms.
+
+### 14.1 Logistic specifications
+
+All three models use current-game loss as the target. Standard errors are cluster-robust by `player_id`.
+
+**Model A**
+
+```text
+loss ~ tilt_proxy
+```
+
+**Model B**
+
+```text
+loss ~ tilt_proxy + rating_difference + color + player_fixed_effect
+```
+
+**Model C**
+
+```text
+loss ~ tilt_proxy + rating_difference + color + same_opponent + player_fixed_effect
+```
+
+The estimated tilt-proxy odds ratios are:
+
+| Model | OR | 95% CI | p-value |
+|---|---:|---|---:|
+| A: unadjusted | 1.717 | [1.228, 2.400] | 0.0016 |
+| B: opponent/player adjusted | 1.122 | [0.901, 1.397] | 0.3028 |
+| C: + same opponent | 1.120 | [0.899, 1.395] | 0.3122 |
+
+The raw association is therefore materially smaller after adjustment for rating difference, color and player fixed effects. Adding same-opponent status changes the estimate only slightly.
+
+These models remain observational. With only 15 player clusters, the cluster-robust p-values should be treated as approximate rather than as definitive population-level evidence.
+
+## 15. Player heterogeneity after v13
+
+The v12 player-level estimates are retained unchanged. They range from **-13.31 to +28.38 percentage points**, with mean **+10.15 pp**, median **+12.01 pp**, **11 positive** estimates and **4 negative** estimates.
+
+The heterogeneity layer remains descriptive. Its confidence intervals quantify uncertainty in the player-level estimates, while the synthetic null and opponent-adjusted analyses provide additional context for interpreting the pooled association.
+
+The combined evidence does not justify treating the raw player-level differences as direct measurements of psychological tilt.
+
+## 16. Related literature
+
+Gee et al. (2025) use a **hierarchical Bayesian logistic regression** to study experiential winner/loser effects in online chess, explicitly modelling population-level and player-level variation. Their paper reports little evidence for a strong, consistent global experiential effect, while allowing for some player-specific variability. urlcitehttps://pmc.ncbi.nlm.nih.gov/articles/PMC13265758/
+
+The present project does **not** reproduce their hierarchical Bayesian methodology. The paper is used as methodological context and motivation for accounting for player-level variation and match context. In this project, the v13 opponent-adjusted models are simpler frequentist logistic regressions, while the synthetic null analysis asks a different question: how often can a raw association of the observed scale arise under explicitly specified no-tilt data-generating processes?
+
+## 17. Updated interpretation
+
+The original +12.66 pp pooled association remains a real descriptive feature of the observed v12 data. However, v13 shows that a difference of comparable magnitude can also arise under null simulations that preserve the observed sequence structure while removing any explicit tilt effect. The exact null distribution depends on how the outcome probabilities are specified: the raw Elo scenario places the observed value in 31.6% of simulations at or above the observed level, while the player-calibrated scenario gives 40.5%.
+
+The opponent-adjusted models provide a second check. Once rating difference, color and player fixed effects are included, the estimated tilt-proxy odds ratio falls from 1.72 in the unadjusted model to about 1.12, with confidence intervals that include 1. Adding same-opponent status changes the estimate only slightly.
+
+The appropriate conclusion is therefore not that tilt has been disproved or confirmed. Rather, the raw association is compatible with a broader data-generating process driven by player performance, opponent strength and sequential match context, and the current observational design does not isolate an independent psychological tilt effect.

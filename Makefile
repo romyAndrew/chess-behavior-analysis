@@ -1,7 +1,7 @@
 PYTHON ?= python
 CONFIG ?= config/config.yaml
 
-.PHONY: help install test collect parse features analyze model viz heterogeneity multi pipeline clean
+.PHONY: help install test collect parse features analyze model viz heterogeneity v13 multi pipeline clean
 
 help:
 	@echo "make install        - install pinned dependencies"
@@ -15,6 +15,7 @@ help:
 	@echo "make model          - run baseline predictive models"
 	@echo "make viz            - generate baseline figures"
 	@echo "make heterogeneity  - run v12 player-level heterogeneity analysis"
+	@echo "make v13             - run v13 null-model and opponent-adjusted analysis"
 
 install:
 	$(PYTHON) -m pip install -r requirements.txt
@@ -42,6 +43,9 @@ viz:
 
 heterogeneity:
 	PYTHONPATH=. $(PYTHON) -m src.pipeline heterogeneity --config $(CONFIG)
+
+v13:
+	PYTHONPATH=. $(PYTHON) -m src.pipeline v13 --config $(CONFIG)
 
 pipeline: collect parse features analyze model viz
 

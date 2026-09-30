@@ -28,6 +28,7 @@ from .stats import (
 )
 from .viz import generate_all
 from .heterogeneity import analyze_player_heterogeneity, save_player_heterogeneity
+from .v13 import run_v13
 from .sampling import (
     LichessSamplingFrame,
     analyze_multi_player,
@@ -352,6 +353,14 @@ def run(command: str, config_path: str) -> None:
         _run_multi_model(settings, logger)
         return
 
+    if command == "v13":
+        path = settings.resolve_path(settings.paths.multi_features_csv)
+        if not path.exists():
+            raise FileNotFoundError(f"Multi-player features not found: {path}")
+        df = pd.read_csv(path, parse_dates=["created_at"])
+        run_v13(df, settings, logger)
+        return
+
     if command == "multi":
         run("sample", config_path)
         run("collect_multi", config_path)
@@ -379,7 +388,7 @@ def main() -> None:
     parser = argparse.ArgumentParser(description="Lichess chess behavior analysis")
     parser.add_argument(
         "command",
-        choices=["collect", "parse", "features", "analyze", "model", "viz", "all", "sample", "collect_multi", "parse_multi", "features_multi", "analyze_multi", "heterogeneity", "model_multi", "multi"],
+        choices=["collect", "parse", "features", "analyze", "model", "viz", "all", "sample", "collect_multi", "parse_multi", "features_multi", "analyze_multi", "heterogeneity", "model_multi", "v13", "multi"],
     )
     parser.add_argument("--config", default="config/config.yaml")
     args = parser.parse_args()

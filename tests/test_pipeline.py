@@ -140,7 +140,6 @@ def test_pipeline_stages_create_consistent_artifacts(tmp_path: Path) -> None:
 
     expected_figures = {
         "win_rate_by_hour.png",
-        "break_by_tilt_proxy.png",
         "win_rate_heatmap.png",
         "tilt_loss_rate_ci.png",
         "correlation_heatmap.png",

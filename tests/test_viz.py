@@ -97,7 +97,6 @@ def test_generate_all_writes_documented_figure_names(tmp_path: Path) -> None:
 
     expected = {
         "win_rate_by_hour.png",
-        "break_by_tilt_proxy.png",
         "win_rate_heatmap.png",
         "tilt_loss_rate_ci.png",
         "correlation_heatmap.png",

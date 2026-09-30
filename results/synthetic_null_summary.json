@@ -1,0 +1,52 @@
+{
+  "observed_baseline": {
+    "total_games": 8043,
+    "decisive_games": 7500,
+    "draws": 543,
+    "players": 15,
+    "tilt_observations": 641,
+    "control_observations": 6859,
+    "tilt_loss_rate": 0.44461778471138846,
+    "control_loss_rate": 0.31797638139670503,
+    "difference_pp": 12.664140331468342
+  },
+  "simulation_seed": 42,
+  "null_simulations_per_scenario": 2000,
+  "scenarios": [
+    {
+      "scenario": "raw_elo",
+      "simulations": 2000,
+      "observed_difference_pp": 12.664140331468342,
+      "mean_difference_pp": 11.618118740706013,
+      "median_difference_pp": 11.66878421914581,
+      "std_difference_pp": 1.9776164112984143,
+      "simulation_interval_low_pp": 7.6463437436076065,
+      "simulation_interval_high_pp": 15.369940223327399,
+      "empirical_upper_tail_proportion": 0.3155,
+      "mean_tilt_n": 776.888,
+      "min_tilt_n": 678,
+      "max_tilt_n": 877,
+      "mean_control_n": 6723.112,
+      "simulation_seed": 42,
+      "calibration_method": "raw Elo probability"
+    },
+    {
+      "scenario": "player_calibrated_elo",
+      "simulations": 2000,
+      "observed_difference_pp": 12.664140331468342,
+      "mean_difference_pp": 12.18064675488124,
+      "median_difference_pp": 12.154764014317626,
+      "std_difference_pp": 2.083552303311634,
+      "simulation_interval_low_pp": 8.276995784982464,
+      "simulation_interval_high_pp": 16.105861563873685,
+      "empirical_upper_tail_proportion": 0.4045,
+      "mean_tilt_n": 686.062,
+      "min_tilt_n": 590,
+      "max_tilt_n": 778,
+      "mean_control_n": 6813.938,
+      "simulation_seed": 42,
+      "calibration_method": "expanding player-specific residual correction using only prior decisive games; p_cal = clip(p_elo + mean(prior observed_loss - p_elo), 1e-4, 1-1e-4)"
+    }
+  ],
+  "calibration_method": "expanding player-specific residual correction using only prior decisive games; p_cal = clip(p_elo + mean(prior observed_loss - p_elo), 1e-4, 1-1e-4)"
+}
