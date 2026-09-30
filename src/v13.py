@@ -298,8 +298,13 @@ def fit_opponent_adjusted_models(
     """Fit three logistic models with player-clustered robust standard errors."""
     model_specs = {
         "A_unadjusted": "loss ~ tilt_proxy_int",
-        "B_opponent_player_adjusted": "loss ~ tilt_proxy_int + rating_diff + color_black + C(player_id)",
-        "C_same_opponent_adjusted": "loss ~ tilt_proxy_int + rating_diff + color_black + same_opponent + C(player_id)",
+        "B_opponent_player_adjusted": (
+            "loss ~ tilt_proxy_int + rating_diff + color_black + C(player_id)"
+        ),
+        "C_same_opponent_adjusted": (
+            "loss ~ tilt_proxy_int + rating_diff + color_black "
+            "+ same_opponent + C(player_id)"
+        ),
     }
     summary_rows: list[dict[str, Any]] = []
     coefficient_rows: list[dict[str, Any]] = []
@@ -401,7 +406,13 @@ def plot_opponent_adjusted_effect(summary: pd.DataFrame, output_path: Path) -> N
     fig, ax = plt.subplots(figsize=(10, 4.8))
     ax.errorbar(x, y, xerr=[x - low, high - x], fmt="o", capsize=5)
     ax.axvline(1.0, linewidth=1, linestyle="--")
-    ax.set_yticks(y, plot_df["model"].astype(str).tolist())
+    display_labels = {
+        "A_unadjusted": "Unadjusted",
+        "B_opponent_player_adjusted": "Player + match context",
+        "C_same_opponent_adjusted": "+ Same opponent",
+    }
+    labels = plot_df["model"].map(display_labels).fillna(plot_df["model"]).tolist()
+    ax.set_yticks(y, labels)
     ax.set_xscale("log")
     ax.set_xlabel("Tilt-proxy odds ratio (log scale, 95% CI)")
     ax.set_ylabel("Model")
