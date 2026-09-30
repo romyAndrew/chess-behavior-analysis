@@ -1,199 +1,59 @@
-"""Static visualizations for the analysis and report."""
+"""Final visualizations retained for the portfolio release."""
 
 from __future__ import annotations
 
-import json
 from pathlib import Path
-from typing import Any
 
 import matplotlib.pyplot as plt
-import numpy as np
 import pandas as pd
-import seaborn as sns
-
-
-def _save(fig: plt.Figure, path: Path) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    fig.tight_layout()
-    fig.savefig(path, dpi=160, bbox_inches="tight")
-    plt.close(fig)
-
-
-def plot_result_by_hour(df: pd.DataFrame, output_dir: Path, timezone_name: str = "UTC") -> None:
-    """Plot win rate by hour in the configured project timezone."""
-    summary = df.groupby("hour", dropna=False)["is_win"].mean().reset_index()
-    fig, ax = plt.subplots(figsize=(10, 5))
-    sns.lineplot(summary, x="hour", y="is_win", marker="o", ax=ax)
-    ax.set(xlabel=f"{timezone_name} hour", ylabel="Win rate", title="Win rate by hour")
-    _save(fig, output_dir / "win_rate_by_hour.png")
-
-
-
-
-def plot_heatmap(df: pd.DataFrame, output_dir: Path, timezone_name: str = "UTC") -> None:
-    """Plot win-rate heatmap across local hour and speed."""
-    pivot = df.pivot_table(index="hour", columns="speed", values="is_win", aggfunc="mean")
-    fig, ax = plt.subplots(figsize=(10, 7))
-    sns.heatmap(pivot, annot=True, fmt=".2f", cmap="viridis", ax=ax)
-    ax.set(title="Win-rate heatmap: hour × speed", xlabel="Speed", ylabel=f"{timezone_name} hour")
-    _save(fig, output_dir / "win_rate_heatmap.png")
-
-
-def plot_tilt_ci(stats_result: dict[str, Any], output_dir: Path) -> None:
-    """Plot Wilson confidence intervals for group-level loss rates."""
-    labels = ["Tilt proxy", "Control"]
-    values = [stats_result["loss_rate_tilt_proxy"], stats_result["loss_rate_control"]]
-    cis = [stats_result["loss_rate_tilt_proxy_ci"], stats_result["loss_rate_control_ci"]]
-    lower = [max(0.0, values[i] - cis[i][0]) for i in range(2)]
-    upper = [max(0.0, cis[i][1] - values[i]) for i in range(2)]
-    fig, ax = plt.subplots(figsize=(8, 5))
-    ax.errorbar(labels, values, yerr=[lower, upper], fmt="o", capsize=5)
-    ax.set_ylim(0, 1)
-    ax.set_ylabel("Loss rate")
-    ax.set_title("Observed loss rate by tilt-proxy state")
-    _save(fig, output_dir / "tilt_loss_rate_ci.png")
-
-
-def plot_correlations(df: pd.DataFrame, output_dir: Path) -> None:
-    """Plot a compact correlation matrix for numeric behavioral features."""
-    cols = [
-        "rating_diff",
-        "break_after_previous",
-        "loss_streak_before",
-        "win_streak_before",
-        "session_game_number",
-        "avg_move_time",
-        "time_pressure",
-        "is_win",
-    ]
-    corr = df[cols].corr(numeric_only=True)
-    fig, ax = plt.subplots(figsize=(9, 7))
-    sns.heatmap(corr, cmap="coolwarm", center=0, ax=ax)
-    ax.set_title("Behavioral feature correlations")
-    _save(fig, output_dir / "correlation_heatmap.png")
-
-
-def plot_tilt_sensitivity(sensitivity: pd.DataFrame, output_path: Path) -> None:
-    """Plot estimated loss-rate differences with confidence intervals by threshold."""
-    plot_df = sensitivity.copy()
-    plot_df = plot_df.loc[plot_df["difference_pp"].notna()].copy()
-    if plot_df.empty:
-        return
-
-    labels = plot_df["threshold_description"].tolist()
-    labels = [
-        f"{label} (baseline)" if baseline else label
-        for label, baseline in zip(labels, plot_df["is_baseline"].tolist(), strict=True)
-    ]
-    y = list(range(len(plot_df)))[::-1]
-    x = plot_df["difference_pp"].to_numpy(dtype=float)
-    lower = x - plot_df["difference_ci_low_pp"].to_numpy(dtype=float)
-    upper = plot_df["difference_ci_high_pp"].to_numpy(dtype=float) - x
-
-    fig, ax = plt.subplots(figsize=(10, 5.8))
-    ax.errorbar(x, y, xerr=[lower, upper], fmt="o", capsize=5)
-    ax.axvline(0.0, linewidth=1, linestyle="--")
-    ax.set_yticks(y, labels)
-    ax.set_xlabel("Estimated difference in loss rate (percentage points)")
-    ax.set_ylabel("Threshold configuration")
-    ax.set_title("Tilt-proxy sensitivity to break and streak thresholds")
-    _save(fig, output_path)
-
-
-def plot_tilt_bootstrap_comparison(comparison: pd.DataFrame, output_path: Path) -> None:
-    """Plot row-level and session-level bootstrap confidence intervals."""
-    if comparison.empty:
-        return
-
-    plot_df = comparison.copy()
-    y = list(range(len(plot_df)))[::-1]
-    x = plot_df["observed_difference_pp"].to_numpy(dtype=float)
-    lower = x - plot_df["ci_low"].to_numpy(dtype=float)
-    upper = plot_df["ci_high"].to_numpy(dtype=float) - x
-    labels = plot_df["method"].str.replace("_", " ").str.title().tolist()
-
-    fig, ax = plt.subplots(figsize=(9, 4.8))
-    ax.errorbar(x, y, xerr=[lower, upper], fmt="o", capsize=5)
-    ax.axvline(0.0, linewidth=1, linestyle="--")
-    ax.set_yticks(y, labels)
-    ax.set_xlabel("Estimated difference in loss rate (percentage points)")
-    ax.set_ylabel("Inference method")
-    ax.set_title("Tilt association: row-level vs session-aware bootstrap")
-    _save(fig, output_path)
-
 
 
 def plot_walk_forward_roc_auc(fold_metrics: pd.DataFrame, output_path: Path) -> None:
-    """Plot ROC-AUC across expanding-window temporal folds for all models."""
+    """Plot ROC-AUC across expanding-window temporal folds."""
     if fold_metrics.empty or "roc_auc" not in fold_metrics.columns:
         return
-
     plot_df = fold_metrics.loc[fold_metrics["roc_auc"].notna()].copy()
     if plot_df.empty:
         return
     plot_df["fold"] = plot_df["fold"].astype(int)
-
     fig, ax = plt.subplots(figsize=(10, 5.5))
-    sns.lineplot(
-        plot_df,
-        x="fold",
-        y="roc_auc",
-        hue="model",
-        marker="o",
-        ax=ax,
-    )
+    for model, group in plot_df.groupby("model", sort=False):
+        ax.plot(group["fold"], group["roc_auc"], marker="o", label=str(model))
+    ax.legend(title="Model")
     ax.axhline(0.5, linewidth=1, linestyle="--")
     ax.set_xlabel("Walk-forward test fold")
     ax.set_ylabel("ROC-AUC")
     ax.set_title("Walk-forward ROC-AUC across temporal folds")
-    _save(fig, output_path)
+    fig.tight_layout()
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    fig.savefig(output_path, dpi=160, bbox_inches="tight")
+    plt.close(fig)
 
 
-def generate_all(
-    df: pd.DataFrame,
-    stats_result: dict[str, Any],
-    output_dir: Path,
-    timezone_name: str = "UTC",
-    sensitivity: pd.DataFrame | None = None,
-    bootstrap_comparison: pd.DataFrame | None = None,
-    walk_forward_folds: pd.DataFrame | None = None,
-) -> None:
-    """Generate the full figure set, including inferential comparisons."""
-    plot_result_by_hour(df, output_dir, timezone_name)
-    plot_heatmap(df, output_dir, timezone_name)
-    plot_tilt_ci(stats_result, output_dir)
-    plot_correlations(df, output_dir)
-    if sensitivity is not None:
-        plot_tilt_sensitivity(sensitivity, output_dir / "tilt_sensitivity.png")
-    if bootstrap_comparison is not None:
-        plot_tilt_bootstrap_comparison(
-            bootstrap_comparison,
-            output_dir / "tilt_bootstrap_comparison.png",
-        )
-    if walk_forward_folds is not None:
-        plot_walk_forward_roc_auc(
-            walk_forward_folds,
-            output_dir / "walk_forward_roc_auc.png",
-        )
-
-
-def plot_multi_player_tilt_effects(player_effects: pd.DataFrame, output_path: Path) -> None:
-    """Plot player-level tilt associations in selection order, not rank order."""
-    plot_df = player_effects.sort_values("selection_order").copy()
-    if plot_df.empty:
+def plot_pooled_tilt_effect(pooled: pd.DataFrame, output_path: Path) -> None:
+    """Plot the primary pooled loss-rate comparison."""
+    if pooled.empty:
         return
-    y = np.arange(len(plot_df))
-    x = plot_df["difference_pp"].to_numpy(dtype=float)
-    ci_low = plot_df["ci_low_pp"].to_numpy(dtype=float)
-    ci_high = plot_df["ci_high_pp"].to_numpy(dtype=float)
-    lower = np.where(np.isfinite(ci_low), x - ci_low, 0.0)
-    upper = np.where(np.isfinite(ci_high), ci_high - x, 0.0)
-
-    fig, ax = plt.subplots(figsize=(10, 6))
-    ax.errorbar(x, y, xerr=[lower, upper], fmt="o", capsize=4)
-    ax.axvline(0.0, linewidth=1, linestyle="--")
-    ax.set_yticks(y, plot_df["player_id"].astype(str).tolist())
-    ax.set_xlabel("Observed difference in loss rate (percentage points)")
-    ax.set_ylabel("Selected player")
-    ax.set_title("Player-level tilt-proxy associations")
-    _save(fig, output_path)
+    row = pooled.iloc[0]
+    tilt_rate = float(row["tilt_loss_rate"]) * 100.0
+    control_rate = float(row["control_loss_rate"]) * 100.0
+    difference = float(row["difference_pp"])
+    tilt_n = int(row["tilt_observations"])
+    control_n = int(row["control_observations"])
+    fig, ax = plt.subplots(figsize=(9, 5))
+    labels = [f"After tilt-proxy (n={tilt_n})", f"Control (n={control_n})"]
+    values = [tilt_rate, control_rate]
+    bars = ax.barh(labels, values)
+    ax.set_xlabel("Loss rate (%)")
+    ax.set_title("Observed loss rate after tilt-proxy vs control")
+    ax.set_xlim(0, max(values) + 10)
+    for bar, value in zip(bars, values, strict=True):
+        ax.text(value + 0.8, bar.get_y() + bar.get_height() / 2, f"{value:.2f}%", va="center", fontsize=11)
+    sign = "+" if difference >= 0 else ""
+    ax.text(0.98, 0.05, f"Difference: {sign}{difference:.2f} pp", transform=ax.transAxes, ha="right", va="bottom", fontsize=11)
+    ax.spines["top"].set_visible(False)
+    ax.spines["right"].set_visible(False)
+    fig.tight_layout()
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    fig.savefig(output_path, dpi=180, bbox_inches="tight")
+    plt.close(fig)

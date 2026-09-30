@@ -3,41 +3,20 @@ project:
   # IANA timezone used for calendar features (default: UTC).
   timezone: UTC
 
-user:
-  username: bat1skaf
-
 paths:
-  raw_pgn: data/raw/lichess_bat1skaf.pgn
-  games_csv: data/processed/games.csv
-  features_csv: data/processed/games_features.csv
-  stats_json: results/tilt_test.json
-  model_metrics_json: results/model_metrics.json
-  model_coefficients_csv: results/model_coefficients.csv
-  model_comparison_csv: results/model_comparison.csv
   multi_model_metrics_json: results/multi_player_model_metrics.json
   multi_model_coefficients_csv: results/multi_player_model_coefficients.csv
   multi_model_comparison_csv: results/multi_player_model_comparison.csv
-  analysis_summary_md: results/analysis_summary.md
-  tilt_sensitivity_csv: results/tilt_sensitivity.csv
-  tilt_sensitivity_md: results/tilt_sensitivity.md
-  tilt_bootstrap_comparison_csv: results/tilt_bootstrap_comparison.csv
-  tilt_bootstrap_comparison_md: results/tilt_bootstrap_comparison.md
-  tilt_sensitivity_session_bootstrap_csv: results/tilt_sensitivity_session_bootstrap.csv
-  walk_forward_metrics_csv: results/walk_forward_metrics.csv
-  walk_forward_fold_metrics_csv: results/walk_forward_fold_metrics.csv
-  walk_forward_metrics_md: results/walk_forward_metrics.md
   multi_walk_forward_metrics_csv: results/multi_player_walk_forward_metrics.csv
   multi_walk_forward_fold_metrics_csv: results/multi_player_walk_forward_fold_metrics.csv
   multi_walk_forward_metrics_md: results/multi_player_walk_forward_metrics.md
   sample_players_csv: results/sample_players.csv
   sampling_metadata_json: results/sampling_metadata.json
-  sampling_candidate_pool_csv: results/sampling_candidate_pool.csv
   multi_raw_dir: data/raw/multi_player_bullet
   multi_processed_dir: data/processed/multi_player_bullet
   multi_games_csv: data/processed/multi_player_bullet_games.csv
   multi_features_csv: data/processed/multi_player_games_features.csv
   player_summary_csv: results/player_summary.csv
-  player_tilt_effects_csv: results/player_tilt_effects.csv
   multi_player_pooled_csv: results/multi_player_pooled_summary.csv
   multi_player_data_quality_csv: results/multi_player_data_quality.csv
   multi_player_analysis_md: results/multi_player_analysis.md
@@ -48,7 +27,6 @@ paths:
   synthetic_null_distribution_csv: results/synthetic_null_distribution.csv
   synthetic_null_summary_csv: results/synthetic_null_summary.csv
   synthetic_null_summary_json: results/synthetic_null_summary.json
-  opponent_context_csv: results/opponent_context.csv
   opponent_adjusted_models_csv: results/opponent_adjusted_models.csv
   opponent_adjusted_coefficients_csv: results/opponent_adjusted_coefficients.csv
   v13_analysis_md: results/v13_analysis.md

@@ -1,25 +1,13 @@
 from pathlib import Path
 
+import numpy as np
 import pandas as pd
-import pytest
-
-pytest.importorskip("chess.pgn")
 
 from src.config import load_settings
-from src.features import build_features_from_csv
+from src.features import add_behavioral_features
 from src.model import fit_model_suite, save_model_results, walk_forward_validate, save_walk_forward_results
-from src.parse import parse_pgn_file
-from src.stats import (
-    analyze_tilt_proxy,
-    analyze_tilt_sensitivity,
-    analyze_tilt_sensitivity_session_bootstrap,
-    compare_tilt_bootstrap_methods,
-    render_summary,
-    save_stats,
-    save_tilt_bootstrap_comparison,
-    save_tilt_sensitivity,
-)
-from src.viz import generate_all
+from src.sampling import analyze_multi_player
+from src.viz import plot_pooled_tilt_effect, plot_walk_forward_roc_auc
 
 
 class _Logger:
@@ -33,143 +21,117 @@ class _Logger:
         return None
 
 
-def test_pipeline_stages_create_consistent_artifacts(tmp_path: Path) -> None:
+def _raw_fixture(n: int = 120) -> pd.DataFrame:
+    base = pd.Timestamp("2026-01-01T12:00:00Z")
+    rows = []
+    for i in range(n):
+        # Repeated loss clusters create a few tilt-proxy observations after short breaks.
+        result = "loss" if i % 7 in {0, 1, 2} else ("draw" if i % 17 == 0 else "win")
+        rows.append(
+            {
+                "game_id": f"g{i}",
+                "created_at": base + pd.Timedelta(minutes=3 * i + (60 if i % 30 == 0 and i else 0)),
+                "player_id": "p1",
+                "username": "p1",
+                "user_result": result,
+                "is_win": int(result == "win"),
+                "is_loss": int(result == "loss"),
+                "is_draw": int(result == "draw"),
+                "is_decisive": result in {"win", "loss"},
+                "result_points": {"win": 1.0, "draw": 0.5, "loss": 0.0}[result],
+                "rating_diff": float(((i * 37) % 240) - 120),
+                "speed": "bullet",
+                "user_color": "black" if i % 2 else "white",
+            }
+        )
+    return pd.DataFrame(rows)
+
+
+def test_final_analysis_stages_create_retained_artifacts(tmp_path: Path) -> None:
     project_root = Path(__file__).resolve().parents[1]
     base = load_settings(project_root / "config/config.yaml")
-    paths = base.paths.model_copy(
-        update={
-            "raw_pgn": project_root / "tests/fixtures/sample_pipeline.pgn",
-            "games_csv": tmp_path / "games.csv",
-            "features_csv": tmp_path / "games_features.csv",
-            "stats_json": tmp_path / "results/tilt_test.json",
-            "model_metrics_json": tmp_path / "results/model_metrics.json",
-            "model_coefficients_csv": tmp_path / "results/model_coefficients.csv",
-            "model_comparison_csv": tmp_path / "results/model_comparison.csv",
-            "analysis_summary_md": tmp_path / "results/analysis_summary.md",
-            "tilt_sensitivity_csv": tmp_path / "results/tilt_sensitivity.csv",
-            "tilt_sensitivity_md": tmp_path / "results/tilt_sensitivity.md",
-            "tilt_bootstrap_comparison_csv": tmp_path / "results/tilt_bootstrap_comparison.csv",
-            "tilt_bootstrap_comparison_md": tmp_path / "results/tilt_bootstrap_comparison.md",
-            "tilt_sensitivity_session_bootstrap_csv": tmp_path / "results/tilt_sensitivity_session_bootstrap.csv",
-            "walk_forward_metrics_csv": tmp_path / "results/walk_forward_metrics.csv",
-            "walk_forward_fold_metrics_csv": tmp_path / "results/walk_forward_fold_metrics.csv",
-            "walk_forward_metrics_md": tmp_path / "results/walk_forward_metrics.md",
-            "log_file": tmp_path / "pipeline.log",
-            "figures_dir": tmp_path / "figures",
-        }
-    )
-    settings = base.model_copy(
-        update={
-            "paths": paths,
-            "repo_root": project_root,
-            "walk_forward": base.walk_forward.model_copy(
-                update={"initial_train_size": 30, "test_window_size": 10, "min_training_size": 20}
-            ),
-        }
-    )
-    logger = _Logger()
+    paths = base.paths.model_copy(update={
+        "multi_features_csv": tmp_path / "games_features.csv",
+        "multi_player_pooled_csv": tmp_path / "results/multi_player_pooled_summary.csv",
+        "multi_player_data_quality_csv": tmp_path / "results/data_quality.csv",
+        "multi_model_metrics_json": tmp_path / "results/multi_player_model_metrics.json",
+        "multi_model_coefficients_csv": tmp_path / "results/multi_player_model_coefficients.csv",
+        "multi_model_comparison_csv": tmp_path / "results/multi_player_model_comparison.csv",
+        "multi_walk_forward_metrics_csv": tmp_path / "results/multi_player_walk_forward_metrics.csv",
+        "multi_walk_forward_fold_metrics_csv": tmp_path / "results/multi_player_walk_forward_fold_metrics.csv",
+        "multi_walk_forward_metrics_md": tmp_path / "results/multi_player_walk_forward_metrics.md",
+        "player_summary_csv": tmp_path / "results/player_summary.csv",
+        "figures_dir": tmp_path / "figures",
+        "log_file": tmp_path / "pipeline.log",
+    })
+    settings = base.model_copy(update={
+        "paths": paths,
+        "repo_root": project_root,
+        "walk_forward": base.walk_forward.model_copy(update={
+            "initial_train_size": 50,
+            "test_window_size": 10,
+            "min_training_size": 30,
+        }),
+        "analysis": base.analysis.model_copy(update={
+            "min_group_size": 2,
+            "bootstrap_iterations": 100,
+        }),
+    })
+    settings.ensure_directories()
 
-    parsed = parse_pgn_file(
-        project_root / "tests/fixtures/sample_pipeline.pgn", settings, logger
-    )
-    assert len(parsed) == 60
+    raw = _raw_fixture()
+    features = add_behavioral_features(raw, settings)
+    features.to_csv(paths.multi_features_csv, index=False)
 
-    features = build_features_from_csv(paths.games_csv, settings, logger)
-    assert len(features) == 60
-    assert settings.project.timezone == "UTC"
-    assert "rating_diff" in features.columns
-    assert "tilt_proxy" in features.columns
-    assert features["session_id"].notna().all()
-    assert all(group["created_at"].is_monotonic_increasing for _, group in features.groupby("session_id"))
+    player_summary, _player_effects, pooled, quality = analyze_multi_player(features, settings, _Logger())
+    assert int(pooled.loc[0, "games"]) == len(features)
+    pooled.to_csv(paths.multi_player_pooled_csv, index=False)
+    player_summary.to_csv(paths.player_summary_csv, index=False)
+    quality.to_csv(paths.multi_player_data_quality_csv, index=False)
 
-    stats_result = analyze_tilt_proxy(features, settings, logger)
-    save_stats(stats_result, settings.resolve_path(paths.stats_json))
-    settings.resolve_path(paths.analysis_summary_md).write_text(
-        render_summary(stats_result), encoding="utf-8"
+    metrics, comparison, coefficients = fit_model_suite(features, settings, _Logger())
+    save_model_results(
+        metrics,
+        comparison,
+        coefficients,
+        settings,
+        metrics_path=paths.multi_model_metrics_json,
+        comparison_path=paths.multi_model_comparison_csv,
+        coefficients_path=paths.multi_model_coefficients_csv,
     )
-
-    sensitivity = analyze_tilt_sensitivity(features, settings, logger)
-    save_tilt_sensitivity(
-        sensitivity,
-        settings.resolve_path(paths.tilt_sensitivity_csv),
-        settings.resolve_path(paths.tilt_sensitivity_md),
-    )
-    bootstrap_comparison = compare_tilt_bootstrap_methods(features, stats_result, settings)
-    save_tilt_bootstrap_comparison(
-        bootstrap_comparison,
-        settings.resolve_path(paths.tilt_bootstrap_comparison_csv),
-        settings.resolve_path(paths.tilt_bootstrap_comparison_md),
-    )
-    session_sensitivity = analyze_tilt_sensitivity_session_bootstrap(features, settings, logger)
-    session_sensitivity.to_csv(
-        settings.resolve_path(paths.tilt_sensitivity_session_bootstrap_csv),
-        index=False,
+    aggregate, folds, baseline = walk_forward_validate(features, settings, _Logger())
+    save_walk_forward_results(
+        aggregate,
+        folds,
+        baseline,
+        settings,
+        aggregate_path=paths.multi_walk_forward_metrics_csv,
+        folds_path=paths.multi_walk_forward_fold_metrics_csv,
+        markdown_path=paths.multi_walk_forward_metrics_md,
     )
 
-    metrics, comparison, coefficients = fit_model_suite(features, settings, logger)
-    save_model_results(metrics, comparison, coefficients, settings)
-    walk_forward_aggregate, walk_forward_folds, baseline = walk_forward_validate(features, settings, logger)
-    save_walk_forward_results(walk_forward_aggregate, walk_forward_folds, baseline, settings)
+    plot_pooled_tilt_effect(pooled, paths.figures_dir / "pooled_tilt_effect.png")
+    plot_walk_forward_roc_auc(folds, paths.figures_dir / "walk_forward_roc_auc.png")
 
-    generate_all(
-        features,
-        stats_result,
-        settings.resolve_path(paths.figures_dir),
-        settings.project.timezone,
-        sensitivity=sensitivity,
-        bootstrap_comparison=bootstrap_comparison,
-        walk_forward_folds=walk_forward_folds,
-    )
-
-    expected_results = {
-        settings.resolve_path(paths.stats_json),
-        settings.resolve_path(paths.analysis_summary_md),
-        settings.resolve_path(paths.model_metrics_json),
-        settings.resolve_path(paths.model_coefficients_csv),
-        settings.resolve_path(paths.model_comparison_csv),
-        settings.resolve_path(paths.tilt_sensitivity_csv),
-        settings.resolve_path(paths.tilt_sensitivity_md),
-        settings.resolve_path(paths.tilt_bootstrap_comparison_csv),
-        settings.resolve_path(paths.tilt_bootstrap_comparison_md),
-        settings.resolve_path(paths.tilt_sensitivity_session_bootstrap_csv),
-        settings.resolve_path(paths.walk_forward_metrics_csv),
-        settings.resolve_path(paths.walk_forward_fold_metrics_csv),
-        settings.resolve_path(paths.walk_forward_metrics_md),
-    }
-    assert all(path.exists() for path in expected_results)
-
-    expected_figures = {
-        "win_rate_by_hour.png",
-        "win_rate_heatmap.png",
-        "tilt_loss_rate_ci.png",
-        "correlation_heatmap.png",
-        "tilt_sensitivity.png",
-        "tilt_bootstrap_comparison.png",
+    assert paths.multi_player_pooled_csv.exists()
+    assert paths.multi_model_metrics_json.exists()
+    assert paths.multi_walk_forward_metrics_csv.exists()
+    assert {path.name for path in paths.figures_dir.glob("*.png")} == {
+        "pooled_tilt_effect.png",
         "walk_forward_roc_auc.png",
     }
-    actual_figures = {path.name for path in settings.resolve_path(paths.figures_dir).glob("*.png")}
-    assert actual_figures == expected_figures
 
-    comparison_loaded = pd.read_csv(settings.resolve_path(paths.model_comparison_csv))
-    assert set(comparison_loaded["model"]) == {"rating_only", "baseline", "behavioral"}
 
-    sensitivity_loaded = pd.read_csv(settings.resolve_path(paths.tilt_sensitivity_csv))
-    assert len(sensitivity_loaded) == 6
-    assert sensitivity_loaded.loc[sensitivity_loaded["is_baseline"], "threshold_description"].tolist() == [
-        "break <= 5 min, streak >= 2"
-    ]
+def test_multi_pipeline_declares_final_stage_order() -> None:
+    from src.pipeline import FINAL_MULTI_STAGES
 
-    bootstrap_loaded = pd.read_csv(settings.resolve_path(paths.tilt_bootstrap_comparison_csv))
-    assert bootstrap_loaded["method"].tolist() == ["row_level_bootstrap", "session_bootstrap"]
-    assert bootstrap_loaded["observed_difference_pp"].nunique() == 1
-
-    session_sensitivity_loaded = pd.read_csv(
-        settings.resolve_path(paths.tilt_sensitivity_session_bootstrap_csv)
+    assert FINAL_MULTI_STAGES == (
+        "sample",
+        "collect_multi",
+        "parse_multi",
+        "features_multi",
+        "analyze_multi",
+        "heterogeneity",
+        "model_multi",
+        "v13",
     )
-    assert len(session_sensitivity_loaded) == 6
-
-    walk_forward_loaded = pd.read_csv(settings.resolve_path(paths.walk_forward_metrics_csv))
-    assert set(walk_forward_loaded["model"]) == {"rating_only", "baseline", "behavioral"}
-    folds_loaded = pd.read_csv(settings.resolve_path(paths.walk_forward_fold_metrics_csv))
-    assert len(folds_loaded) == 9
-    assert folds_loaded["train_end_idx"].groupby(folds_loaded["model"]).nunique().eq(3).all()

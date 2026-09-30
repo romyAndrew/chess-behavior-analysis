@@ -191,7 +191,7 @@ def _render_heterogeneity_section(
     pooled: pd.DataFrame,
     summary: dict[str, Any],
 ) -> str:
-    """Render the v12 report section for the multi-player analysis report."""
+    """Render the player-level heterogeneity section for the multi-player analysis report."""
     pooled_row = pooled.iloc[0]
     small_groups = summary["players_below_existing_min_group_size"]
     lines = [
@@ -199,7 +199,7 @@ def _render_heterogeneity_section(
         "",
         "### Method",
         "",
-        "The baseline tilt association is estimated separately for each selected player using the unchanged v11 tilt proxy: previous loss, break <= 5 minutes, and previous loss streak >= 2. The observed risk difference, odds ratio and p-value reuse the project's existing statistical logic. Difference confidence intervals use the existing session-aware bootstrap with the configured bootstrap iterations and seed.",
+        "The baseline tilt association is estimated separately for each selected player using the predefined baseline tilt proxy: previous loss, break <= 5 minutes, and previous loss streak >= 2. The observed risk difference, odds ratio and p-value reuse the project's existing statistical logic. Difference confidence intervals use the existing session-aware bootstrap with the configured bootstrap iterations and seed.",
         "",
         "No player is removed because of a small tilt group. Groups below the project's existing `min_group_size` are retained and explicitly flagged as having greater statistical uncertainty.",
         "",
@@ -240,7 +240,7 @@ def save_player_heterogeneity(
     pooled: pd.DataFrame,
     settings: Settings,
 ) -> dict[str, Any]:
-    """Persist v12 heterogeneity artifacts without modifying v11 model outputs."""
+    """Persist the player-level heterogeneity analysis artifacts."""
     result_path = settings.resolve_path(settings.paths.player_heterogeneity_csv)
     result_path.parent.mkdir(parents=True, exist_ok=True)
     results.to_csv(result_path, index=False)
@@ -251,7 +251,6 @@ def save_player_heterogeneity(
         json.dumps(summary, indent=2, allow_nan=True),
         encoding="utf-8",
     )
-
 
     report_path = settings.resolve_path(settings.paths.multi_player_analysis_md)
     existing = report_path.read_text(encoding="utf-8") if report_path.exists() else ""

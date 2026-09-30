@@ -20,7 +20,6 @@ from .config import Settings
 from .research import filter_research_games, select_latest_decisive_window
 from .stats import analyze_tilt_proxy
 from .parse import normalize_result
-from .viz import plot_multi_player_tilt_effects
 
 
 _SAFE_NAME_RE = re.compile(r"[^A-Za-z0-9_.-]+")
@@ -167,7 +166,7 @@ class LichessSamplingFrame:
         return games, decisive
 
     def _candidate_paths(self, player_id: str) -> tuple[Path, Path]:
-        """Return v11 bullet raw and processed paths used to screen one candidate."""
+        """Return bullet raw and processed paths used to screen one candidate."""
         safe = _safe_filename(player_id)
         raw = self.settings.resolve_path(self.settings.paths.multi_raw_dir) / f"{safe}.pgn"
         processed = (
@@ -339,7 +338,7 @@ class LichessSamplingFrame:
         analyzable_decisive_games: int,
         settings: Settings,
     ) -> bool:
-        """Apply the v11 eligibility rule to analyzable decisive bullet games."""
+        """Apply the predefined eligibility rule to analyzable decisive bullet games."""
         return analyzable_decisive_games >= settings.sampling.min_decisive_games
 
     @staticmethod
@@ -383,7 +382,7 @@ class LichessSamplingFrame:
         return counts
 
     def select(self) -> tuple[pd.DataFrame, dict[str, Any], pd.DataFrame]:
-        """Build, screen and reproducibly select players for the v11 bullet sample."""
+        """Build, screen and reproducibly select players for the final bullet sample."""
         pool = self._leaderboard_players()
         pool_hash = _candidate_pool_hash(pool)
         candidate_ids = pool["player_id"].tolist()
@@ -544,16 +543,13 @@ class LichessSamplingFrame:
 def save_sampling_artifacts(
     selected: pd.DataFrame,
     metadata: dict[str, Any],
-    candidate_pool: pd.DataFrame,
     settings: Settings,
 ) -> None:
-    """Save selected players, sampling metadata and the candidate pool."""
+    """Save selected players and sampling metadata."""
     selected_path = settings.resolve_path(settings.paths.sample_players_csv)
     selected_path.parent.mkdir(parents=True, exist_ok=True)
     selected.to_csv(selected_path, index=False)
 
-    pool_path = settings.resolve_path(settings.paths.sampling_candidate_pool_csv)
-    candidate_pool.to_csv(pool_path, index=False)
 
     metadata_path = settings.resolve_path(settings.paths.sampling_metadata_json)
     metadata_path.write_text(json.dumps(metadata, indent=2), encoding="utf-8")
@@ -592,7 +588,7 @@ def _pooled_descriptive_summary(df: pd.DataFrame) -> pd.DataFrame:
             if len(tilt) and len(control)
             else np.nan
         ),
-        "inference": "descriptive_only; no player-clustered pooled inference introduced in v11",
+        "inference": "descriptive_only; no pooled player-clustered inference introduced",
     }
     return pd.DataFrame([row])
 
@@ -602,7 +598,7 @@ def analyze_multi_player(
     settings: Settings,
     logger: logging.Logger,
 ) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame]:
-    """Calculate player-level and pooled descriptive statistics for the v11 windows."""
+    """Calculate player-level and pooled descriptive statistics for the final observation windows."""
     required = {"player_id", "session_id", "is_decisive", "tilt_proxy", "is_loss", "created_at"}
     missing = required.difference(df.columns)
     if missing:
@@ -691,7 +687,7 @@ def render_multi_player_summary(
     pooled: pd.DataFrame,
     metadata: dict[str, Any],
 ) -> str:
-    """Render the v11 bullet-population and observation-window report."""
+    """Render the final bullet-population and observation-window report."""
     pooled_row = pooled.iloc[0]
     lines = [
         "# Multi-Player Bullet Analysis",
@@ -752,9 +748,11 @@ def save_multi_player_analysis(
     quality_path = settings.resolve_path(settings.paths.multi_player_data_quality_csv)
     if quality_path.exists():
         existing_quality = pd.read_csv(quality_path)
-        existing_quality.insert(0, "quality_scope", "global_parse")
+        if "quality_scope" not in existing_quality.columns:
+            existing_quality.insert(0, "quality_scope", "global_parse")
         player_quality = quality.copy()
-        player_quality.insert(0, "quality_scope", "player_features")
+        if "quality_scope" not in player_quality.columns:
+            player_quality.insert(0, "quality_scope", "player_features")
         combined_quality = pd.concat([existing_quality, player_quality], ignore_index=True, sort=False)
         combined_quality.to_csv(quality_path, index=False)
     else:
@@ -762,15 +760,6 @@ def save_multi_player_analysis(
         quality.insert(0, "quality_scope", "player_features")
         quality.to_csv(quality_path, index=False)
     metadata = dict(metadata)
-    metadata["analysis_summary_created_at"] = datetime.now(timezone.utc).isoformat()
+    metadata["analysis_created_at"] = datetime.now(timezone.utc).isoformat()
     report_path = settings.resolve_path(settings.paths.multi_player_analysis_md)
     report_path.write_text(render_multi_player_summary(player_summary, pooled, metadata), encoding="utf-8")
-
-    effects = player_effects.copy()
-    selection = pd.read_csv(settings.resolve_path(settings.paths.sample_players_csv))
-    selection = selection.loc[selection["selected"].astype(bool), ["player_id", "selection_order"]]
-    effects = effects.drop(columns=["selection_order"], errors="ignore").merge(
-        selection, on="player_id", how="left", validate="one_to_one"
-    )
-    effects.to_csv(settings.resolve_path(settings.paths.player_tilt_effects_csv), index=False)
-    plot_multi_player_tilt_effects(effects, settings.resolve_path(settings.paths.figures_dir) / "player_tilt_effects.png")

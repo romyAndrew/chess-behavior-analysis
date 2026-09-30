@@ -36,7 +36,7 @@ def test_parse_game_with_mocked_nodes() -> None:
             "Site": "https://lichess.org/ABCDEFGH",
             "UTCDate": "2026.01.01",
             "UTCTime": "12:00:00",
-            "White": "bat1skaf",
+            "White": "p1",
             "Black": "opponent",
             "WhiteElo": "1500",
             "BlackElo": "1490",
@@ -57,7 +57,7 @@ def test_parse_game_with_mocked_nodes() -> None:
         def exception(self, *args, **kwargs):
             return None
 
-    record = parse_game(fake_game, "bat1skaf", settings, DummyLogger())
+    record = parse_game(fake_game, "p1", settings, DummyLogger())
     assert record is not None
     assert record.game_id == "ABCDEFGH"
     assert record.user_result == "win"
@@ -78,7 +78,7 @@ def test_user_move_count_is_not_clock_coverage() -> None:
             "Site": "https://lichess.org/IJKLMNOP",
             "UTCDate": "2026.01.01",
             "UTCTime": "12:00:00",
-            "White": "bat1skaf",
+            "White": "p1",
             "Black": "opponent",
             "Result": "1/2-1/2",
             "TimeControl": "180+2",
@@ -93,7 +93,7 @@ def test_user_move_count_is_not_clock_coverage() -> None:
         def exception(self, *args, **kwargs):
             return None
 
-    record = parse_game(fake_game, "bat1skaf", settings, DummyLogger())
+    record = parse_game(fake_game, "p1", settings, DummyLogger())
     assert record is not None
     assert record.user_move_count == 2
     assert record.clock_coverage == 0.0
@@ -114,7 +114,7 @@ def test_clock_durations_do_not_use_initial_clock_when_first_annotation_is_missi
             "Site": "https://lichess.org/QRSTUVWX",
             "UTCDate": "2026.01.01",
             "UTCTime": "12:00:00",
-            "White": "bat1skaf",
+            "White": "p1",
             "Black": "opponent",
             "Result": "1-0",
             "TimeControl": "180+2",
@@ -129,7 +129,7 @@ def test_clock_durations_do_not_use_initial_clock_when_first_annotation_is_missi
         def exception(self, *args, **kwargs):
             return None
 
-    record = parse_game(fake_game, "bat1skaf", settings, DummyLogger())
+    record = parse_game(fake_game, "p1", settings, DummyLogger())
     assert record is not None
     # Only the second white clock annotation can be used to measure a white move.
     assert record.user_move_count == 3
@@ -164,7 +164,7 @@ def test_real_style_node_turn_method_uses_parent_board_for_mover() -> None:
             "Site": "https://lichess.org/REALTURN1",
             "UTCDate": "2026.01.01",
             "UTCTime": "12:00:00",
-            "White": "bat1skaf",
+            "White": "p1",
             "Black": "opponent",
             "Result": "1-0",
             "TimeControl": "180+2",
@@ -179,7 +179,7 @@ def test_real_style_node_turn_method_uses_parent_board_for_mover() -> None:
         def exception(self, *args, **kwargs):
             return None
 
-    record = parse_game(fake_game, "bat1skaf", settings, DummyLogger())
+    record = parse_game(fake_game, "p1", settings, DummyLogger())
     assert record is not None
     assert record.user_move_count == 1
     assert record.avg_move_time is not None

@@ -1,6 +1,6 @@
 # V13: Synthetic Null and Opponent-Adjusted Analysis
 
-V13 is an analytical layer built on the fixed v12 research dataset. The v12 sampling design, data, tilt proxy, sensitivity analysis, heterogeneity analysis and predictive models are preserved.
+V13 is an analytical layer built on the fixed final multi-player research dataset. The sampling design, data, tilt proxy, heterogeneity analysis and predictive models remain fixed.
 
 ## Observed baseline sanity check
 

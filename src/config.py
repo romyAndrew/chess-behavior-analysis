@@ -27,52 +27,21 @@ class ProjectConfig(BaseModel):
         return value
 
 
-class UserConfig(BaseModel):
-    model_config = ConfigDict(extra="forbid")
-    username: str
-
-    @field_validator("username")
-    @classmethod
-    def username_not_empty(cls, value: str) -> str:
-        value = value.strip()
-        if not value:
-            raise ValueError("username must not be empty")
-        return value
-
-
 class PathsConfig(BaseModel):
     model_config = ConfigDict(extra="forbid")
-    raw_pgn: Path
-    games_csv: Path
-    features_csv: Path
-    stats_json: Path
-    model_metrics_json: Path
-    model_coefficients_csv: Path
-    model_comparison_csv: Path
     multi_model_metrics_json: Path
     multi_model_coefficients_csv: Path
     multi_model_comparison_csv: Path
-    analysis_summary_md: Path
-    tilt_sensitivity_csv: Path
-    tilt_sensitivity_md: Path
-    tilt_bootstrap_comparison_csv: Path
-    tilt_bootstrap_comparison_md: Path
-    tilt_sensitivity_session_bootstrap_csv: Path
-    walk_forward_metrics_csv: Path
-    walk_forward_fold_metrics_csv: Path
-    walk_forward_metrics_md: Path
     multi_walk_forward_metrics_csv: Path
     multi_walk_forward_fold_metrics_csv: Path
     multi_walk_forward_metrics_md: Path
     sample_players_csv: Path
     sampling_metadata_json: Path
-    sampling_candidate_pool_csv: Path
     multi_raw_dir: Path
     multi_processed_dir: Path
     multi_games_csv: Path
     multi_features_csv: Path
     player_summary_csv: Path
-    player_tilt_effects_csv: Path
     multi_player_pooled_csv: Path
     multi_player_data_quality_csv: Path
     multi_player_analysis_md: Path
@@ -83,7 +52,6 @@ class PathsConfig(BaseModel):
     synthetic_null_distribution_csv: Path
     synthetic_null_summary_csv: Path
     synthetic_null_summary_json: Path
-    opponent_context_csv: Path
     opponent_adjusted_models_csv: Path
     opponent_adjusted_coefficients_csv: Path
     v13_analysis_md: Path
@@ -192,7 +160,6 @@ class SamplingConfig(BaseModel):
 class Settings(BaseModel):
     model_config = ConfigDict(extra="forbid")
     project: ProjectConfig
-    user: UserConfig
     paths: PathsConfig
     api: ApiConfig
     features: FeaturesConfig
@@ -212,36 +179,18 @@ class Settings(BaseModel):
     def ensure_directories(self) -> None:
         """Create all configured parent directories."""
         for path in (
-            self.resolve_path(self.paths.raw_pgn),
-            self.resolve_path(self.paths.games_csv),
-            self.resolve_path(self.paths.features_csv),
-            self.resolve_path(self.paths.stats_json),
-            self.resolve_path(self.paths.model_metrics_json),
-            self.resolve_path(self.paths.model_coefficients_csv),
-            self.resolve_path(self.paths.model_comparison_csv),
             self.resolve_path(self.paths.multi_model_metrics_json),
             self.resolve_path(self.paths.multi_model_coefficients_csv),
             self.resolve_path(self.paths.multi_model_comparison_csv),
-            self.resolve_path(self.paths.analysis_summary_md),
-            self.resolve_path(self.paths.tilt_sensitivity_csv),
-            self.resolve_path(self.paths.tilt_sensitivity_md),
-            self.resolve_path(self.paths.tilt_bootstrap_comparison_csv),
-            self.resolve_path(self.paths.tilt_bootstrap_comparison_md),
-            self.resolve_path(self.paths.tilt_sensitivity_session_bootstrap_csv),
-            self.resolve_path(self.paths.walk_forward_metrics_csv),
-            self.resolve_path(self.paths.walk_forward_fold_metrics_csv),
-            self.resolve_path(self.paths.walk_forward_metrics_md),
             self.resolve_path(self.paths.multi_walk_forward_metrics_csv),
             self.resolve_path(self.paths.multi_walk_forward_fold_metrics_csv),
             self.resolve_path(self.paths.multi_walk_forward_metrics_md),
             self.resolve_path(self.paths.sample_players_csv),
             self.resolve_path(self.paths.sampling_metadata_json),
-            self.resolve_path(self.paths.sampling_candidate_pool_csv),
             self.resolve_path(self.paths.multi_games_csv),
             self.resolve_path(self.paths.multi_processed_dir),
             self.resolve_path(self.paths.multi_features_csv),
             self.resolve_path(self.paths.player_summary_csv),
-            self.resolve_path(self.paths.player_tilt_effects_csv),
             self.resolve_path(self.paths.multi_player_pooled_csv),
             self.resolve_path(self.paths.multi_player_data_quality_csv),
             self.resolve_path(self.paths.multi_player_analysis_md),
@@ -251,7 +200,6 @@ class Settings(BaseModel):
             self.resolve_path(self.paths.synthetic_null_distribution_csv),
             self.resolve_path(self.paths.synthetic_null_summary_csv),
             self.resolve_path(self.paths.synthetic_null_summary_json),
-            self.resolve_path(self.paths.opponent_context_csv),
             self.resolve_path(self.paths.opponent_adjusted_models_csv),
             self.resolve_path(self.paths.opponent_adjusted_coefficients_csv),
             self.resolve_path(self.paths.v13_analysis_md),

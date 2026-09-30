@@ -20,7 +20,7 @@ def test_streaks_sessions_and_tilt_proxy() -> None:
             {
                 "game_id": f"g{idx}",
                 "created_at": current,
-                "username": "bat1skaf",
+                "username": "p1",
                 "user_result": result,
                 "is_win": int(result == "win"),
                 "is_loss": int(result == "loss"),
@@ -45,7 +45,7 @@ def test_first_game_has_no_previous_break_or_tilt() -> None:
             {
                 "game_id": "g1",
                 "created_at": pd.Timestamp("2026-01-01T12:00:00Z"),
-                "username": "bat1skaf",
+                "username": "p1",
                 "user_result": "win",
                 "is_win": 1,
                 "is_loss": 0,
@@ -72,7 +72,7 @@ def test_calendar_features_use_configured_timezone() -> None:
             {
                 "game_id": "g1",
                 "created_at": pd.Timestamp("2026-01-01T23:30:00Z"),
-                "username": "bat1skaf",
+                "username": "p1",
                 "user_result": "win",
                 "is_win": 1,
                 "is_loss": 0,

@@ -43,7 +43,7 @@
       "accuracy": 0.638,
       "balanced_accuracy": 0.6029519424741329,
       "roc_auc": 0.6456489555541095,
-      "log_loss": 0.6287978289882393,
+      "log_loss": 0.6287978289882432,
       "split": "chronological",
       "test_start": "2026-08-31 12:26:18+00:00",
       "features": [

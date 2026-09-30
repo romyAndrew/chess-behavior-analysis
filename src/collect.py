@@ -71,7 +71,7 @@ class LichessCollector:
         self.session.headers.update(
             {
                 "Accept": settings.api.accept,
-                "User-Agent": f"{settings.api.user_agent} (user={settings.user.username})",
+                "User-Agent": settings.api.user_agent,
             }
         )
 
@@ -183,7 +183,8 @@ class LichessCollector:
         When ``reuse_existing`` is enabled, an existing PGN becomes the starting
         point for pagination. If it already satisfies ``stop_condition`` no
         network request is made; otherwise only older history is fetched.
-        The default remains the legacy single-player behavior.
+        The method is used by the multi-player collection stage and can also
+        reuse an existing per-player raw artifact.
         """
         target = max_games if max_games is not None else self.settings.api.max_games
         seen_ids: set[str] = set()
@@ -277,14 +278,6 @@ class LichessCollector:
         output.write_text(combined, encoding="utf-8")
         self.logger.info("Saved %d games to %s", min(total, target), output)
         return output
-
-    def collect(self) -> Path:
-        """Collect the configured baseline user's games without changing v9 behavior."""
-        return self.collect_user(
-            self.settings.user.username,
-            self.settings.resolve_path(self.settings.paths.raw_pgn),
-            self.settings.api.max_games,
-        )
 
     @staticmethod
     def _trim_to_game_count(pgn: str, target: int) -> str:

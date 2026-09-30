@@ -58,7 +58,7 @@ The baseline tilt definition remains the existing rule: previous game was a loss
 
 ### Method
 
-The baseline tilt association is estimated separately for each selected player using the unchanged v11 tilt proxy: previous loss, break <= 5 minutes, and previous loss streak >= 2. The observed risk difference, odds ratio and p-value reuse the project's existing statistical logic. Difference confidence intervals use the existing session-aware bootstrap with the configured bootstrap iterations and seed.
+The baseline tilt association is estimated separately for each selected player using the predefined baseline tilt proxy: previous loss, break <= 5 minutes, and previous loss streak >= 2. The observed risk difference, odds ratio and p-value reuse the project's existing statistical logic. Difference confidence intervals use the existing session-aware bootstrap with the configured bootstrap iterations and seed.
 
 No player is removed because of a small tilt group. Groups below the project's existing `min_group_size` are retained and explicitly flagged as having greater statistical uncertainty.
 
@@ -79,36 +79,3 @@ Players below the existing configured `min_group_size` reference: black_knight22
 The estimated association varies across players to the extent shown by the observed point-estimate range and confidence intervals. This is descriptive evidence about heterogeneity in the sampled players, not evidence that any individual player is psychologically more or less prone to tilt.
 
 The sample represents randomly selected active bullet players from the specified Lichess bullet leaderboard sampling frame who met the predefined data-availability criteria. It should not be interpreted as an average effect for all Lichess users.
-
-## V13: Synthetic null and opponent-adjusted analysis
-
-V13 adds a null-model and match-context sensitivity layer to the fixed v12 dataset. The existing v12 sampling design and results are unchanged.
-
-### Synthetic null model
-
-The observed baseline remains **+12.66 pp** with **641** decisive tilt-proxy observations. The synthetic null preserves player/opponent structure, ratings, colors, timestamps, breaks, sessions, draws and repeated opponents, and regenerates only decisive win/loss outcomes.
-
-| Scenario | Mean difference | 95% simulation interval | Share of null simulations >= observed |
-|---|---:|---|---:|
-| Raw Elo | +11.62 pp | [7.65, 15.37] pp | 31.6% |
-| Player-calibrated Elo | +12.18 pp | [8.28, 16.11] pp | 40.5% |
-
-The intervals are central 95% intervals of the simulated null distributions, not confidence intervals. The upper-tail proportions are descriptive empirical tail probabilities, not automatically interpreted as conventional p-values.
-
-### Opponent context
-
-Games after a previous loss have a lower mean rating difference than games after a previous non-loss (84.25 vs 151.10), indicating stronger average opposition in that subset. After a previous loss and short break, the mean rating difference is 71.58 and the same-opponent rate is 53.4%.
-
-### Opponent-adjusted models
-
-| Model | Tilt OR | 95% CI | p-value |
-|---|---:|---|---:|
-| A: unadjusted | 1.717 | [1.228, 2.400] | 0.0016 |
-| B: rating + color + player effects | 1.122 | [0.901, 1.397] | 0.3028 |
-| C: Model B + same opponent | 1.120 | [0.899, 1.395] | 0.3122 |
-
-Standard errors are cluster-robust by `player_id`. These models are observational and do not identify a causal or psychological tilt effect.
-
-### V13 interpretation
-
-The observed +12.66 pp association is not uniquely attributable to an independent tilt effect under the current design. Comparable differences arise in the specified no-tilt synthetic null scenarios, and the estimated association becomes materially smaller after adjustment for rating difference, color and player fixed effects.

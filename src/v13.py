@@ -134,7 +134,7 @@ def recompute_synthetic_tilt_proxy(
 
 
 def validate_real_baseline(df: pd.DataFrame, settings: Settings, tolerance: float = 1e-12) -> dict[str, Any]:
-    """Recompute the v12 observed baseline from the supplied analytic dataset."""
+    """Recompute the observed baseline from the supplied analytic dataset."""
     data = _prepare_multi_player_data(df)
     decisive = data["is_decisive"].astype(bool)
     tilt = data.loc[decisive, "tilt_proxy"].astype(bool)
@@ -298,13 +298,8 @@ def fit_opponent_adjusted_models(
     """Fit three logistic models with player-clustered robust standard errors."""
     model_specs = {
         "A_unadjusted": "loss ~ tilt_proxy_int",
-        "B_opponent_player_adjusted": (
-            "loss ~ tilt_proxy_int + rating_diff + color_black + C(player_id)"
-        ),
-        "C_same_opponent_adjusted": (
-            "loss ~ tilt_proxy_int + rating_diff + color_black "
-            "+ same_opponent + C(player_id)"
-        ),
+        "B_opponent_player_adjusted": "loss ~ tilt_proxy_int + rating_diff + color_black + C(player_id)",
+        "C_same_opponent_adjusted": "loss ~ tilt_proxy_int + rating_diff + color_black + same_opponent + C(player_id)",
     }
     summary_rows: list[dict[str, Any]] = []
     coefficient_rows: list[dict[str, Any]] = []
@@ -477,7 +472,6 @@ def run_v13(df: pd.DataFrame, settings: Settings, logger: logging.Logger) -> dic
         ),
         encoding="utf-8",
     )
-    context.to_csv(settings.resolve_path(paths.opponent_context_csv), index=False)
     model_summary.to_csv(settings.resolve_path(paths.opponent_adjusted_models_csv), index=False)
     model_coefficients.to_csv(settings.resolve_path(paths.opponent_adjusted_coefficients_csv), index=False)
 
@@ -512,7 +506,7 @@ def render_v13_analysis_markdown(
     lines = [
         "# V13: Synthetic Null and Opponent-Adjusted Analysis",
         "",
-        "V13 is an analytical layer built on the fixed v12 research dataset. The v12 sampling design, data, tilt proxy, sensitivity analysis, heterogeneity analysis and predictive models are preserved.",
+        "V13 is an analytical layer built on the fixed final multi-player research dataset. The sampling design, data, tilt proxy, heterogeneity analysis and predictive models remain fixed.",
         "",
         "## Observed baseline sanity check",
         "",

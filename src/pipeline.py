@@ -11,22 +11,12 @@ import pandas as pd
 
 from .collect import LichessCollector
 from .config import load_settings
-from .features import add_behavioral_features, build_features_from_csv
+from .features import add_behavioral_features
 from .logging_utils import configure_logging
 from .model import fit_model_suite, save_model_results, save_walk_forward_results, walk_forward_validate
 from .parse import parse_pgn_file
 from .research import select_latest_decisive_window
-from .stats import (
-    analyze_tilt_proxy,
-    analyze_tilt_sensitivity,
-    analyze_tilt_sensitivity_session_bootstrap,
-    compare_tilt_bootstrap_methods,
-    render_summary,
-    save_stats,
-    save_tilt_bootstrap_comparison,
-    save_tilt_sensitivity,
-)
-from .viz import generate_all
+from .viz import plot_pooled_tilt_effect, plot_walk_forward_roc_auc
 from .heterogeneity import analyze_player_heterogeneity, save_player_heterogeneity
 from .v13 import run_v13
 from .sampling import (
@@ -35,6 +25,18 @@ from .sampling import (
     load_selected_players,
     save_multi_player_analysis,
     save_sampling_artifacts,
+)
+
+
+FINAL_MULTI_STAGES = (
+    "sample",
+    "collect_multi",
+    "parse_multi",
+    "features_multi",
+    "analyze_multi",
+    "heterogeneity",
+    "model_multi",
+    "v13",
 )
 
 
@@ -236,97 +238,15 @@ def _run_multi_model(settings, logger) -> None:
 
 
 def run(command: str, config_path: str) -> None:
-    """Run one pipeline stage."""
+    """Run one final research pipeline stage."""
     settings, logger = _settings_and_logger(config_path)
     logger.info("Starting stage: %s", command)
 
-    raw_pgn = settings.resolve_path(settings.paths.raw_pgn)
-    games_csv = settings.resolve_path(settings.paths.games_csv)
-    features_csv = settings.resolve_path(settings.paths.features_csv)
-
-    if command == "collect":
-        LichessCollector(settings, logger).collect()
-        return
-
-    if command == "parse":
-        parse_pgn_file(raw_pgn, settings, logger)
-        return
-
-    if command == "features":
-        build_features_from_csv(games_csv, settings, logger)
-        return
-
-    if command == "analyze":
-        df = pd.read_csv(features_csv, parse_dates=["created_at"])
-        result = analyze_tilt_proxy(df, settings, logger)
-        bootstrap_comparison = compare_tilt_bootstrap_methods(df, result, settings)
-        save_stats(result, settings.resolve_path(settings.paths.stats_json))
-        summary_path = settings.resolve_path(settings.paths.analysis_summary_md)
-        summary_path.parent.mkdir(parents=True, exist_ok=True)
-        summary_path.write_text(render_summary(result), encoding="utf-8")
-
-        save_tilt_bootstrap_comparison(
-            bootstrap_comparison,
-            settings.resolve_path(settings.paths.tilt_bootstrap_comparison_csv),
-            settings.resolve_path(settings.paths.tilt_bootstrap_comparison_md),
-        )
-
-        sensitivity = analyze_tilt_sensitivity(df, settings, logger)
-        save_tilt_sensitivity(
-            sensitivity,
-            settings.resolve_path(settings.paths.tilt_sensitivity_csv),
-            settings.resolve_path(settings.paths.tilt_sensitivity_md),
-        )
-        sensitivity_session_bootstrap = analyze_tilt_sensitivity_session_bootstrap(
-            df, settings, logger
-        )
-        sensitivity_session_bootstrap.to_csv(
-            settings.resolve_path(settings.paths.tilt_sensitivity_session_bootstrap_csv),
-            index=False,
-        )
-        return
-
-    if command == "model":
-        df = pd.read_csv(features_csv, parse_dates=["created_at"])
-        metrics, comparison, coefficients = fit_model_suite(df, settings, logger)
-        save_model_results(metrics, comparison, coefficients, settings)
-        walk_forward_aggregate, walk_forward_folds, chronological_baseline = walk_forward_validate(
-            df, settings, logger
-        )
-        save_walk_forward_results(
-            walk_forward_aggregate,
-            walk_forward_folds,
-            chronological_baseline,
-            settings,
-        )
-        return
-
-    if command == "viz":
-        df = pd.read_csv(features_csv, parse_dates=["created_at"])
-        stats_path = settings.resolve_path(settings.paths.stats_json)
-        stats_result = json.loads(stats_path.read_text(encoding="utf-8"))
-        sensitivity_path = settings.resolve_path(settings.paths.tilt_sensitivity_csv)
-        sensitivity = pd.read_csv(sensitivity_path)
-        bootstrap_path = settings.resolve_path(settings.paths.tilt_bootstrap_comparison_csv)
-        bootstrap_comparison = pd.read_csv(bootstrap_path)
-        walk_forward_path = settings.resolve_path(settings.paths.walk_forward_fold_metrics_csv)
-        walk_forward_folds = pd.read_csv(walk_forward_path) if walk_forward_path.exists() else None
-        generate_all(
-            df,
-            stats_result,
-            settings.resolve_path(settings.paths.figures_dir),
-            settings.project.timezone,
-            sensitivity=sensitivity,
-            bootstrap_comparison=bootstrap_comparison,
-            walk_forward_folds=walk_forward_folds,
-        )
-        return
-
     if command == "sample":
         sampler = LichessSamplingFrame(settings, logger)
-        selected, metadata, candidate_pool = sampler.select()
-        save_sampling_artifacts(selected, metadata, candidate_pool, settings)
-        logger.info("Selected %d eligible players from candidate pool of %d", len(selected), len(candidate_pool))
+        selected, metadata, _candidate_pool = sampler.select()
+        save_sampling_artifacts(selected, metadata, settings)
+        logger.info("Selected %d eligible players", len(selected))
         return
 
     if command == "collect_multi":
@@ -343,6 +263,8 @@ def run(command: str, config_path: str) -> None:
 
     if command == "analyze_multi":
         _run_multi_analysis(settings, logger)
+        pooled = pd.read_csv(settings.resolve_path(settings.paths.multi_player_pooled_csv))
+        plot_pooled_tilt_effect(pooled, settings.resolve_path(settings.paths.figures_dir) / "pooled_tilt_effect.png")
         return
 
     if command == "heterogeneity":
@@ -351,6 +273,8 @@ def run(command: str, config_path: str) -> None:
 
     if command == "model_multi":
         _run_multi_model(settings, logger)
+        folds = pd.read_csv(settings.resolve_path(settings.paths.multi_walk_forward_fold_metrics_csv))
+        plot_walk_forward_roc_auc(folds, settings.resolve_path(settings.paths.figures_dir) / "walk_forward_roc_auc.png")
         return
 
     if command == "v13":
@@ -362,22 +286,8 @@ def run(command: str, config_path: str) -> None:
         return
 
     if command == "multi":
-        run("sample", config_path)
-        run("collect_multi", config_path)
-        run("parse_multi", config_path)
-        run("features_multi", config_path)
-        run("analyze_multi", config_path)
-        run("heterogeneity", config_path)
-        run("model_multi", config_path)
-        return
-
-    if command == "all":
-        run("collect", config_path)
-        run("parse", config_path)
-        run("features", config_path)
-        run("analyze", config_path)
-        run("model", config_path)
-        run("viz", config_path)
+        for stage in FINAL_MULTI_STAGES:
+            run(stage, config_path)
         return
 
     raise ValueError(f"Unknown command: {command}")
@@ -388,7 +298,10 @@ def main() -> None:
     parser = argparse.ArgumentParser(description="Lichess chess behavior analysis")
     parser.add_argument(
         "command",
-        choices=["collect", "parse", "features", "analyze", "model", "viz", "all", "sample", "collect_multi", "parse_multi", "features_multi", "analyze_multi", "heterogeneity", "model_multi", "v13", "multi"],
+        choices=[
+            "sample", "collect_multi", "parse_multi", "features_multi",
+            "analyze_multi", "heterogeneity", "model_multi", "v13", "multi",
+        ],
     )
     parser.add_argument("--config", default="config/config.yaml")
     args = parser.parse_args()

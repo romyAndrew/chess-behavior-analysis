@@ -221,15 +221,15 @@ def save_model_results(
     coefficients_path: Path | None = None,
 ) -> None:
     """Save model metrics, comparison table, and behavioral coefficients."""
-    metrics_path = settings.resolve_path(metrics_path or settings.paths.model_metrics_json)
+    metrics_path = settings.resolve_path(metrics_path or settings.paths.multi_model_metrics_json)
     metrics_path.parent.mkdir(parents=True, exist_ok=True)
     metrics_path.write_text(json.dumps(metrics, ensure_ascii=False, indent=2), encoding="utf-8")
 
-    comparison_path = settings.resolve_path(comparison_path or settings.paths.model_comparison_csv)
+    comparison_path = settings.resolve_path(comparison_path or settings.paths.multi_model_comparison_csv)
     comparison_path.parent.mkdir(parents=True, exist_ok=True)
     comparison.to_csv(comparison_path, index=False)
 
-    coef_path = settings.resolve_path(coefficients_path or settings.paths.model_coefficients_csv)
+    coef_path = settings.resolve_path(coefficients_path or settings.paths.multi_model_coefficients_csv)
     coef_path.parent.mkdir(parents=True, exist_ok=True)
     coefficients.to_csv(coef_path, index=False)
 
@@ -466,9 +466,9 @@ def save_walk_forward_results(
     markdown_path: Path | None = None,
 ) -> None:
     """Save walk-forward aggregate/fold metrics and a compact markdown summary."""
-    aggregate_path = settings.resolve_path(aggregate_path or settings.paths.walk_forward_metrics_csv)
-    folds_path = settings.resolve_path(folds_path or settings.paths.walk_forward_fold_metrics_csv)
-    markdown_path = settings.resolve_path(markdown_path or settings.paths.walk_forward_metrics_md)
+    aggregate_path = settings.resolve_path(aggregate_path or settings.paths.multi_walk_forward_metrics_csv)
+    folds_path = settings.resolve_path(folds_path or settings.paths.multi_walk_forward_fold_metrics_csv)
+    markdown_path = settings.resolve_path(markdown_path or settings.paths.multi_walk_forward_metrics_md)
     aggregate_path.parent.mkdir(parents=True, exist_ok=True)
     folds_path.parent.mkdir(parents=True, exist_ok=True)
     markdown_path.parent.mkdir(parents=True, exist_ok=True)

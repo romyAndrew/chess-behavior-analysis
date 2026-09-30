@@ -379,14 +379,10 @@ def parse_pgn_file(
     settings: Settings,
     logger: logging.Logger,
     *,
-    username: str | None = None,
+    username: str,
     output_path: Path | None = None,
 ) -> pd.DataFrame:
-    """Parse a PGN file into a validated DataFrame.
-
-    ``username`` and ``output_path`` are optional extensions used by the
-    multi-player pipeline; the existing single-player call remains unchanged.
-    """
+    """Parse a PGN file into a validated DataFrame."""
     try:
         import chess.pgn
     except ImportError as exc:
@@ -407,7 +403,7 @@ def parse_pgn_file(
                 break
             if getattr(game, "errors", None):
                 logger.warning("Game contained parser errors near byte offset %s: %s", offset, game.errors)
-            record = parse_game(game, username or settings.user.username, settings, logger)
+            record = parse_game(game, username, settings, logger)
             if record is not None:
                 records.append(record.model_dump())
 
@@ -415,7 +411,9 @@ def parse_pgn_file(
     if not df.empty:
         df["created_at"] = pd.to_datetime(df["created_at"], utc=True)
         df = df.sort_values("created_at").drop_duplicates("game_id", keep="first").reset_index(drop=True)
-    output = output_path or settings.resolve_path(settings.paths.games_csv)
+    if output_path is None:
+        raise ValueError("output_path is required for the final multi-player pipeline")
+    output = output_path
     output.parent.mkdir(parents=True, exist_ok=True)
     df.to_csv(output, index=False)
     logger.info("Parsed %d games into %s", len(df), output)

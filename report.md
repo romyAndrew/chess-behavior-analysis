@@ -71,9 +71,9 @@ analyze_multi
 heterogeneity
   ↓
 model_multi
+  ↓
+v13
 ```
-
-The original `run.py` pipeline remains as a single-player regression baseline for `bat1skaf`. It is not the final research population.
 
 ## 4. Feature engineering
 
@@ -105,28 +105,6 @@ previous loss streak >= 2
 
 This proxy is an operational behavioral definition. It is not a psychological measurement, and no result in this project establishes whether a player was actually experiencing a mental or emotional state called tilt.
 
-### 5.1 Sensitivity definitions
-
-The existing sensitivity analysis retains six definitions:
-
-- break <= 2 min, streak >= 2;
-- break <= 5 min, streak >= 2 (baseline);
-- break <= 10 min, streak >= 2;
-- break <= 15 min, streak >= 2;
-- break <= 5 min, streak >= 3;
-- break <= 5 min, streak >= 4.
-
-These definitions are retained from the original single-player analysis. The observed association kept a positive point estimate across all six tested definitions in that baseline, while the estimated magnitude changed more when the required losing-streak length increased and the tilt group became smaller. This is treated as threshold sensitivity, not as proof of robustness.
-
-The associated artifacts are:
-
-```text
-results/tilt_sensitivity.csv
-results/tilt_sensitivity.md
-results/tilt_sensitivity_session_bootstrap.csv
-figures/tilt_sensitivity.png
-```
-
 ## 6. Statistical analysis
 
 The primary outcome is the current game's loss indicator among decisive observations.
@@ -138,9 +116,9 @@ The hypotheses are:
 
 The existing statistical logic uses Fisher's exact test for small expected counts and a two-proportion z-test otherwise. Effect sizes include odds ratio and risk difference. The project also retains Wilson confidence intervals for group loss rates.
 
-The original single-player baseline compares row-level bootstrap and session-aware bootstrap intervals. The session-aware version resamples complete existing sessions to account for within-session dependence. Both use 5,000 iterations and seed 42.
+Player-level risk-difference intervals use a session-aware bootstrap that resamples complete existing sessions to account for within-session dependence. The analysis uses 5,000 bootstrap iterations with seed 42.
 
-The v12 player-level analysis reuses that session-aware bootstrap infrastructure for player-specific risk-difference intervals. No new bootstrap framework was introduced.
+This uncertainty estimate is used only for the supplementary player-level heterogeneity analysis; the pooled result remains descriptive.
 
 ## 7. Final multi-player association results
 
@@ -164,7 +142,7 @@ This pooled result is explicitly **descriptive**. Observations from the same pla
 
 ### 7.2 Player-level heterogeneity
 
-The v12 extension estimates the unchanged baseline tilt association separately for each selected player.
+The multi-player analysis estimates the unchanged baseline tilt association separately for each selected player.
 
 Across 15 players:
 
@@ -180,16 +158,16 @@ The estimates therefore vary in both magnitude and direction across the sampled 
 
 One player has only **9 tilt observations**, below the configured reference size of 10. The player is retained in the analysis and explicitly flagged rather than removed.
 
-Several player-level p-values are below 0.05. These results are exploratory because multiple player-level tests were performed and no multiple-comparison correction was introduced in v12.
+Several player-level p-values are below 0.05. These results are exploratory because multiple player-level tests were performed and no multiple-comparison correction was introduced in the player-level analysis.
 
-The canonical v12 outputs are:
+The canonical player-level outputs are:
 
 ```text
 results/player_heterogeneity.csv
 results/player_heterogeneity_summary.json
 ```
 
-The primary visualization uses selection order for readability and includes point estimates, confidence intervals and a zero reference line. It is not a player ranking.
+The player-level estimates are retained as supplementary tabular analysis rather than as a headline ranking.
 
 ## 8. Predictive modeling
 
@@ -207,7 +185,7 @@ Rating difference plus game speed and player color.
 
 The baseline model plus break duration, previous streaks, session position, the tilt proxy and cyclic time-of-day features.
 
-No new models or behavioral predictors were introduced in v12.
+No additional predictors were introduced in the final release.
 
 ### 8.1 Chronological holdout
 
@@ -241,17 +219,7 @@ results/multi_player_walk_forward_fold_metrics.csv
 results/multi_player_walk_forward_metrics.md
 ```
 
-## 9. Historical single-player baseline
-
-The repository retains the original `bat1skaf` single-player analysis for regression and development history.
-
-That baseline contained **652 parsed games**, with 50 tilt-proxy observations and 570 controls. The observed risk difference was **+8.8 pp**, the row-bootstrap 95% CI was **[-5.2, +22.9] pp**, the odds ratio was **1.42**, and the two-proportion z-test gave **p = 0.232**.
-
-The original single-player model outputs and four-fold walk-forward results remain in `results/`. They are not the final multi-player research findings.
-
-This historical baseline is useful for regression testing because v12 must not silently change its behavior when only the documentation and heterogeneity layer are modified.
-
-## 10. Limitations
+## 9. Limitations
 
 ### Observational design
 
@@ -281,7 +249,7 @@ The pooled multi-player association is descriptive because no player-clustered i
 
 Lichess data can change over time. The documented results correspond to the verified dataset and sampling metadata used for this analysis run.
 
-## 11. Reproducibility
+## 10. Reproducibility
 
 Create a Python environment and install the pinned dependencies:
 
@@ -303,20 +271,13 @@ Run the final research pipeline:
 python -m src.pipeline multi --config config/config.yaml
 ```
 
-The original single-player regression baseline is available with:
-
-```bash
-python run.py
-```
-
 Because the project uses a live Lichess API, a fresh collection may not reproduce the same raw game snapshot. The repository records the research cutoff, sampling seed, candidate-pool hash, selected players and eligibility rule in `results/sampling_metadata.json`.
 
-## 12. Key artifacts
+## 11. Key artifacts
 
 ```text
 results/
 ├── sample_players.csv
-├── sampling_candidate_pool.csv
 ├── sampling_metadata.json
 ├── player_summary.csv
 ├── multi_player_pooled_summary.csv
@@ -329,24 +290,30 @@ results/
 ├── multi_player_model_coefficients.csv
 ├── multi_player_walk_forward_metrics.csv
 ├── multi_player_walk_forward_fold_metrics.csv
-└── multi_player_walk_forward_metrics.md
+├── multi_player_walk_forward_metrics.md
+├── synthetic_null_distribution.csv
+├── synthetic_null_summary.csv
+├── synthetic_null_summary.json
+├── opponent_adjusted_models.csv
+├── opponent_adjusted_coefficients.csv
+└── v13_analysis.md
 
 figures/
-├── player_tilt_effects.png
+├── pooled_tilt_effect.png
+├── synthetic_null_distribution.png
+├── opponent_adjusted_effect.png
 └── walk_forward_roc_auc.png
 ```
 
-Legacy single-player statistical artifacts remain in `results/` for regression testing and historical comparison. They are not the final multi-player research population.
+## 12. V13: synthetic null model
 
-## 13. V13: synthetic null model
+V13 is an analytical layer over the fixed final multi-player dataset. The sampling frame, 15 selected players, cutoff, `60+0` restriction, observation windows, baseline tilt proxy, player-level heterogeneity and predictive models remain fixed while the null and context-adjusted analyses are added.
 
-V13 is an analytical layer over the fixed v12 dataset. The sampling frame, 15 selected players, cutoff, `60+0` restriction, observation windows, baseline tilt proxy, sensitivity analysis, player-level heterogeneity and predictive models are unchanged.
-
-### 13.1 Baseline sanity check
+### 12.1 Baseline sanity check
 
 The observed dataset contains **8,043** games, **7,500** decisive games and **543** draws across **15** players. Recomputing the baseline from the same feature file gives **641** tilt-proxy observations and an observed pooled difference of **+12.66 percentage points**.
 
-### 13.2 Null data-generating process
+### 12.2 Null data-generating process
 
 For each simulation, player identity, opponent identity, ratings, rating differences, color, timestamps, breaks, sessions, draws, repeated-opponent structure and game counts are preserved. Only decisive win/loss outcomes are regenerated.
 
@@ -366,7 +333,7 @@ The current game's outcome is never used to construct its own probability, and d
 
 Both null scenarios contain no explicit tilt effect. After synthetic outcomes are generated, the same baseline tilt-proxy rule is recomputed from the synthetic sequence.
 
-### 13.3 Null simulation results
+### 12.3 Null simulation results
 
 The analysis uses **2,000 simulations per scenario** with seed **42**.
 
@@ -381,13 +348,13 @@ The upper-tail proportion is the share of null simulations at least as large as 
 
 The observed association therefore has a non-negligible occurrence rate under both specified null data-generating processes, even though no explicit tilt effect is simulated.
 
-## 14. Opponent context and adjusted models
+## 13. Opponent context and adjusted models
 
 A first diagnostic shows that games following a previous loss tend to occur against relatively stronger opponents than games following a previous non-loss. The mean rating difference is **84.25** after a previous loss versus **151.10** after a previous non-loss; lower rating difference means the opponent is stronger relative to the focal player.
 
 After a previous loss and short break, the mean rating difference is **71.58**, and the same-opponent rate is **53.4%**. The broader short-break group has a same-opponent rate of **51.0%**, while the longer-break group has a rate of **3.5%**. These are descriptive context measures rather than causal mechanisms.
 
-### 14.1 Logistic specifications
+### 13.1 Logistic specifications
 
 All three models use current-game loss as the target. Standard errors are cluster-robust by `player_id`.
 
@@ -421,23 +388,23 @@ The raw association is therefore materially smaller after adjustment for rating 
 
 These models remain observational. With only 15 player clusters, the cluster-robust p-values should be treated as approximate rather than as definitive population-level evidence.
 
-## 15. Player heterogeneity after v13
+## 14. Player heterogeneity after v13
 
-The v12 player-level estimates are retained unchanged. They range from **-13.31 to +28.38 percentage points**, with mean **+10.15 pp**, median **+12.01 pp**, **11 positive** estimates and **4 negative** estimates.
+The player-level estimates remain unchanged. They range from **-13.31 to +28.38 percentage points**, with mean **+10.15 pp**, median **+12.01 pp**, **11 positive** estimates and **4 negative** estimates.
 
 The heterogeneity layer remains descriptive. Its confidence intervals quantify uncertainty in the player-level estimates, while the synthetic null and opponent-adjusted analyses provide additional context for interpreting the pooled association.
 
 The combined evidence does not justify treating the raw player-level differences as direct measurements of psychological tilt.
 
-## 16. Related literature
+## 15. Related literature
 
 Gee et al. (2025) use a **hierarchical Bayesian logistic regression** to study experiential winner/loser effects in online chess, explicitly modelling population-level and player-level variation. Their paper reports little evidence for a strong, consistent global experiential effect, while allowing for some player-specific variability. urlcitehttps://pmc.ncbi.nlm.nih.gov/articles/PMC13265758/
 
 The present project does **not** reproduce their hierarchical Bayesian methodology. The paper is used as methodological context and motivation for accounting for player-level variation and match context. In this project, the v13 opponent-adjusted models are simpler frequentist logistic regressions, while the synthetic null analysis asks a different question: how often can a raw association of the observed scale arise under explicitly specified no-tilt data-generating processes?
 
-## 17. Updated interpretation
+## 16. Updated interpretation
 
-The original +12.66 pp pooled association remains a real descriptive feature of the observed v12 data. However, v13 shows that a difference of comparable magnitude can also arise under null simulations that preserve the observed sequence structure while removing any explicit tilt effect. The exact null distribution depends on how the outcome probabilities are specified: the raw Elo scenario places the observed value in 31.6% of simulations at or above the observed level, while the player-calibrated scenario gives 40.5%.
+The +12.66 pp pooled association is a descriptive feature of the observed final multi-player dataset. However, v13 shows that a difference of comparable magnitude can also arise under null simulations that preserve the observed sequence structure while removing any explicit tilt effect. The exact null distribution depends on how the outcome probabilities are specified: the raw Elo scenario places the observed value in 31.6% of simulations at or above the observed level, while the player-calibrated scenario gives 40.5%.
 
 The opponent-adjusted models provide a second check. Once rating difference, color and player fixed effects are included, the estimated tilt-proxy odds ratio falls from 1.72 in the unadjusted model to about 1.12, with confidence intervals that include 1. Adding same-opponent status changes the estimate only slightly.
 

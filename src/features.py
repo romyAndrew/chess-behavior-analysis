@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-import logging
-from pathlib import Path
 
 import numpy as np
 import pandas as pd
@@ -22,7 +20,7 @@ def _streaks(results: pd.Series, target: str) -> pd.Series:
 
 
 def _player_column(df: pd.DataFrame) -> str:
-    """Return the sequential-group key without changing single-player output semantics."""
+    """Return the sequential-group key for the focal player."""
     return "player_id" if "player_id" in df.columns else "username"
 
 
@@ -139,12 +137,3 @@ def add_behavioral_features(df: pd.DataFrame, settings: Settings) -> pd.DataFram
     # Post-move features such as time_pressure are intentionally excluded from
     # the predictive model to avoid target leakage.
     return out
-
-
-def build_features_from_csv(path: Path, settings: Settings, logger: logging.Logger) -> pd.DataFrame:
-    """Load parsed games, add features, and persist the result."""
-    df = pd.read_csv(path, parse_dates=["created_at"])
-    result = add_behavioral_features(df, settings)
-    logger.info("Feature engineering produced %d rows", len(result))
-    result.to_csv(settings.resolve_path(settings.paths.features_csv), index=False)
-    return result

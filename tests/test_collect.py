@@ -90,28 +90,6 @@ def test_multi_collect_skips_complete_players_and_caps_batch_size(tmp_path, monk
     assert calls[0][5] is True and calls[1][5] is True
 
 
-def test_single_player_collect_keeps_existing_target(monkeypatch) -> None:
-    from src.config import load_settings
-    from src.collect import LichessCollector
-
-    settings = load_settings("config/config.yaml")
-    collector = LichessCollector(settings, None)
-    calls = []
-
-    def fake_collect_user(username, output, max_games=None, *, batch_size=None):
-        calls.append((username, output, max_games, batch_size))
-        return output
-
-    monkeypatch.setattr(collector, "collect_user", fake_collect_user)
-    result = collector.collect()
-
-    assert result == settings.resolve_path(settings.paths.raw_pgn)
-    assert calls == [(
-        settings.user.username,
-        settings.resolve_path(settings.paths.raw_pgn),
-        settings.api.max_games,
-        None,
-    )]
 
 
 def test_collect_user_reuses_sufficient_raw_without_network(tmp_path, monkeypatch) -> None:

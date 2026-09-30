@@ -1,3 +1,0 @@
-method,observed_difference_pp,ci_low,ci_high,n_observations,n_sessions,bootstrap_iterations,random_seed
-row_level_bootstrap,8.807017543859653,-5.228947368421051,22.948245614035077,620,171,5000,42
-session_bootstrap,8.807017543859653,-6.884742791744788,21.932804930239755,620,171,5000,42

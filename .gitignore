@@ -10,9 +10,3 @@ data/raw/multi_player_bullet/
 data/processed/*.csv
 data/processed/*.parquet
 data/processed/multi_player_bullet/
-
-# Local and generated data
-data/raw/
-data/processed/multi_player/
-logs/
-*.zip

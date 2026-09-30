@@ -1,7 +1,0 @@
-configuration,threshold_description,break_threshold_minutes,min_loss_streak,is_baseline,n_observations,n_tilt_observations,n_control_observations,session_bootstrap_ci_low_pp,session_bootstrap_ci_high_pp,n_sessions,bootstrap_iterations,random_seed,observed_difference_pp
-break_2m_streak_2,"break <= 2 min, streak >= 2",2.0,2,False,620,24,596,-5.130051598527954,28.87436309260079,171,5000,42,10.850111856823268
-break_5m_streak_2,"break <= 5 min, streak >= 2",5.0,2,True,620,50,570,-6.884742791744788,21.932804930239755,171,5000,42,8.807017543859653
-break_10m_streak_2,"break <= 10 min, streak >= 2",10.0,2,False,620,61,559,-5.7793951377631325,20.885696383816686,171,5000,42,8.689404381360156
-break_15m_streak_2,"break <= 15 min, streak >= 2",15.0,2,False,620,83,537,-4.487748355565505,18.355913957487648,171,5000,42,7.289493168203537
-break_5m_streak_3,"break <= 5 min, streak >= 3",5.0,3,False,620,24,596,0.09384086939767614,38.411031836915605,171,5000,42,19.51901565995525
-break_5m_streak_4,"break <= 5 min, streak >= 4",5.0,4,False,620,12,608,-17.511440271683618,53.27746070285525,171,5000,42,19.133771929824555
